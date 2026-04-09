@@ -1,0 +1,64 @@
+# Oikos - Standalone Docker Compose for Portainer / remote deployment
+# Pulls the pre-built image from GitHub Container Registry.
+# No git clone required.
+#
+# Usage:
+#   1. Copy this file and the .env section below to your server
+#   2. Create a .env file next to this compose file (see below)
+#   3. docker compose -f docker-compose.portainer.yml up -d
+#   4. docker compose -f docker-compose.portainer.yml exec oikos node setup.js
+#   5. Open http://<your-host>:3000
+#
+# Required .env variables:
+#   SESSION_SECRET=<random-string-min-32-chars>
+#   DB_ENCRYPTION_KEY=<random-string-min-32-chars>
+#
+# Generate secrets:
+#   openssl rand -base64 32
+
+services:
+  oikos:
+    image: ghcr.io/ulsklyc/oikos:latest
+    container_name: oikos
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - oikos_data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/oikos.db
+      - SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      - DB_ENCRYPTION_KEY=${DB_ENCRYPTION_KEY:?Set DB_ENCRYPTION_KEY in .env}
+      # Set to true when behind a reverse proxy with HTTPS
+      - SESSION_SECURE=${SESSION_SECURE:-false}
+      # Weather (optional)
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      - OPENWEATHER_CITY=${OPENWEATHER_CITY:-Berlin}
+      - OPENWEATHER_UNITS=${OPENWEATHER_UNITS:-metric}
+      - OPENWEATHER_LANG=${OPENWEATHER_LANG:-de}
+      # Google Calendar (optional)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-}
+      # Apple Calendar CalDAV (optional)
+      - APPLE_CALDAV_URL=${APPLE_CALDAV_URL:-https://caldav.icloud.com}
+      - APPLE_USERNAME=${APPLE_USERNAME:-}
+      - APPLE_APP_SPECIFIC_PASSWORD=${APPLE_APP_SPECIFIC_PASSWORD:-}
+      # Sync interval in minutes
+      - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-15}
+      # Rate limiting
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
+      - RATE_LIMIT_MAX_ATTEMPTS=${RATE_LIMIT_MAX_ATTEMPTS:-5}
+      - RATE_LIMIT_BLOCK_DURATION_MS=${RATE_LIMIT_BLOCK_DURATION_MS:-900000}
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  oikos_data:
+    driver: local

@@ -1,0 +1,335 @@
+/**
+ * Modul: Google Calendar Sync
+ * Zweck: OAuth 2.0 + bidirektionaler Sync mit Google Calendar API v3
+ * Abhängigkeiten: googleapis, server/db.js
+ *
+ * sync_config-Schlüssel:
+ *   google_access_token   - OAuth Access Token
+ *   google_refresh_token  - OAuth Refresh Token (langlebig)
+ *   google_token_expiry   - ISO-8601-Timestamp bis wann Access Token gültig ist
+ *   google_sync_token     - Inkrementeller Sync-Token von Google (events.list)
+ *   google_last_sync      - ISO-8601-Timestamp des letzten erfolgreichen Syncs
+ */
+
+import { createLogger } from '../logger.js';
+const log = createLogger('Google');
+
+import { google } from 'googleapis';
+import crypto from 'node:crypto';
+import * as db from '../db.js';
+
+const GOOGLE_COLOR = '#4285F4';
+
+// --------------------------------------------------------
+// OAuth2-Client (lazy initialisiert)
+// --------------------------------------------------------
+
+function createClient() {
+  const clientId     = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const redirectUri  = process.env.GOOGLE_REDIRECT_URI;
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new Error('[Google] GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET und GOOGLE_REDIRECT_URI müssen gesetzt sein.');
+  }
+
+  return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+}
+
+// --------------------------------------------------------
+// sync_config Helfer
+// --------------------------------------------------------
+
+function cfgGet(key) {
+  const row = db.get().prepare('SELECT value FROM sync_config WHERE key = ?').get(key);
+  return row ? row.value : null;
+}
+
+function cfgSet(key, value) {
+  db.get().prepare(`
+    INSERT INTO sync_config (key, value)
+    VALUES (?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+                                   updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+  `).run(key, value);
+}
+
+function cfgDel(key) {
+  db.get().prepare('DELETE FROM sync_config WHERE key = ?').run(key);
+}
+
+// --------------------------------------------------------
+// Client mit gespeicherten Tokens laden
+// --------------------------------------------------------
+
+function loadAuthorizedClient() {
+  const accessToken  = cfgGet('google_access_token');
+  const refreshToken = cfgGet('google_refresh_token');
+
+  if (!accessToken || !refreshToken) {
+    throw new Error('[Google] Nicht konfiguriert - zuerst OAuth durchführen.');
+  }
+
+  const client = createClient();
+  client.setCredentials({
+    access_token:  accessToken,
+    refresh_token: refreshToken,
+    expiry_date:   cfgGet('google_token_expiry') ? parseInt(cfgGet('google_token_expiry'), 10) : undefined,
+  });
+
+  // Token-Refresh automatisch speichern
+  client.on('tokens', (tokens) => {
+    if (tokens.access_token) cfgSet('google_access_token', tokens.access_token);
+    if (tokens.expiry_date)  cfgSet('google_token_expiry', String(tokens.expiry_date));
+  });
+
+  return client;
+}
+
+// --------------------------------------------------------
+// Öffentliche API
+// --------------------------------------------------------
+
+/**
+ * Generiert die Google OAuth2-URL zum Weiterleiten des Admins.
+ * @returns {string} Auth-URL
+ */
+/**
+ * Generiert die Google OAuth2-URL zum Weiterleiten des Admins.
+ * Enthalt einen CSRF-sicheren state-Parameter.
+ * @param {object} session - Express-Session-Objekt (state wird dort gespeichert)
+ * @returns {string} Auth-URL
+ */
+function getAuthUrl(session) {
+  const client = createClient();
+  const state = crypto.randomBytes(32).toString('hex');
+  if (session) session.googleOAuthState = state;
+  return client.generateAuthUrl({
+    access_type: 'offline',
+    prompt:      'consent',
+    scope:       ['https://www.googleapis.com/auth/calendar'],
+    state,
+  });
+}
+
+/**
+ * OAuth-Callback: tauscht Code gegen Tokens, speichert in sync_config.
+ * @param {string} code - Code aus dem OAuth-Callback-Query-Parameter
+ */
+async function handleCallback(code) {
+  const client = createClient();
+  const { tokens } = await client.getToken(code);
+
+  if (!tokens.refresh_token) {
+    throw new Error('[Google] Kein Refresh Token erhalten. Bitte Zugriff in Google-Konto widerrufen und erneut verbinden.');
+  }
+
+  cfgSet('google_access_token',  tokens.access_token);
+  cfgSet('google_refresh_token', tokens.refresh_token);
+  if (tokens.expiry_date) cfgSet('google_token_expiry', String(tokens.expiry_date));
+
+  log.info('OAuth erfolgreich - Tokens gespeichert.');
+}
+
+/**
+ * Verbindungsstatus zurückgeben.
+ * @returns {{ configured: boolean, connected: boolean, lastSync: string|null }}
+ */
+function getStatus() {
+  const configured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI);
+  const connected  = !!(cfgGet('google_access_token') && cfgGet('google_refresh_token'));
+  const lastSync   = cfgGet('google_last_sync');
+  return { configured, connected, lastSync };
+}
+
+/**
+ * Tokens und Sync-State löschen (Verbindung trennen).
+ */
+function disconnect() {
+  ['google_access_token', 'google_refresh_token', 'google_token_expiry',
+   'google_sync_token', 'google_last_sync'].forEach(cfgDel);
+  log.info('Verbindung getrennt.');
+}
+
+/**
+ * Bidirektionaler Sync.
+ * Inbound:  Google → lokale DB (Upsert via external_calendar_id)
+ * Outbound: lokale Termine (external_source='local', external_calendar_id IS NULL) → Google
+ */
+async function sync() {
+  const client  = loadAuthorizedClient();
+  const calendar = google.calendar({ version: 'v3', auth: client });
+
+  // --------------------------------------------------------
+  // Inbound: Google → lokal
+  // --------------------------------------------------------
+  let syncToken = cfgGet('google_sync_token');
+  let pageToken = undefined;
+  let newSyncToken = null;
+
+  do {
+    let listParams = {
+      calendarId:    'primary',
+      singleEvents:  true,
+      pageToken,
+    };
+
+    if (syncToken) {
+      listParams.syncToken = syncToken;
+    } else {
+      // Erstsync: letzte 3 Monate + nächste 12 Monate
+      const timeMin = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      const timeMax = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      listParams.timeMin = timeMin;
+      listParams.timeMax = timeMax;
+    }
+
+    let response;
+    try {
+      response = await calendar.events.list(listParams);
+    } catch (err) {
+      if (err.code === 410) {
+        // syncToken abgelaufen → vollständiger Resync
+        log.warn('syncToken ungültig - vollständiger Resync.');
+        cfgDel('google_sync_token');
+        syncToken = null;
+        continue;
+      }
+      throw err;
+    }
+
+    const items = response.data.items || [];
+    upsertGoogleEvents(items);
+
+    pageToken    = response.data.nextPageToken;
+    newSyncToken = response.data.nextSyncToken || newSyncToken;
+  } while (pageToken);
+
+  if (newSyncToken) cfgSet('google_sync_token', newSyncToken);
+
+  // --------------------------------------------------------
+  // Outbound: lokal → Google
+  // --------------------------------------------------------
+  const localEvents = db.get().prepare(`
+    SELECT * FROM calendar_events
+    WHERE external_source = 'local' AND external_calendar_id IS NULL
+  `).all();
+
+  for (const event of localEvents) {
+    try {
+      const gEvent = localEventToGoogle(event);
+      const created = await calendar.events.insert({
+        calendarId: 'primary',
+        requestBody: gEvent,
+      });
+      db.get().prepare(`
+        UPDATE calendar_events SET external_calendar_id = ?, external_source = 'google' WHERE id = ?
+      `).run(created.data.id, event.id);
+    } catch (err) {
+      log.error(`Outbound-Fehler für Event ${event.id}:`, err.message);
+    }
+  }
+
+  cfgSet('google_last_sync', new Date().toISOString());
+  log.info(`Sync abgeschlossen - ${localEvents.length} lokal → Google, Inbound via syncToken.`);
+}
+
+// --------------------------------------------------------
+// Helfer: Google-Event in lokale DB upserten
+// --------------------------------------------------------
+
+function upsertGoogleEvents(items) {
+  const upsert = db.get().prepare(`
+    INSERT INTO calendar_events
+      (title, description, start_datetime, end_datetime, all_day,
+       location, color, external_calendar_id, external_source, recurrence_rule, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'google', ?, 1)
+    ON CONFLICT(external_calendar_id) DO UPDATE SET
+      title          = excluded.title,
+      description    = excluded.description,
+      start_datetime = excluded.start_datetime,
+      end_datetime   = excluded.end_datetime,
+      all_day        = excluded.all_day,
+      location       = excluded.location,
+      recurrence_rule = excluded.recurrence_rule
+  `);
+
+  const del = db.get().prepare(`
+    DELETE FROM calendar_events WHERE external_calendar_id = ? AND external_source = 'google'
+  `);
+
+  // Erst external_calendar_id UNIQUE index anlegen falls noch nicht vorhanden
+  // (Migration 2 legt idx_calendar_external_id an, aber kein UNIQUE constraint)
+  // Wir nutzen stattdessen manuelles Upsert mit SELECT + INSERT/UPDATE
+  const insertOrUpdate = db.transaction((item) => {
+    if (item.status === 'cancelled') {
+      del.run(item.id);
+      return;
+    }
+
+    const allDay      = !!(item.start?.date && !item.start?.dateTime);
+    const startDt     = allDay ? item.start.date : (item.start?.dateTime || item.start?.date);
+    const endDt       = allDay ? (item.end?.date || null) : (item.end?.dateTime || item.end?.date || null);
+    const title       = item.summary || '(kein Titel)';
+    const description = item.description || null;
+    const location    = item.location    || null;
+    const rrule       = item.recurrence  ? item.recurrence[0] : null;
+
+    const existing = db.get().prepare(
+      'SELECT id FROM calendar_events WHERE external_calendar_id = ? AND external_source = ?'
+    ).get(item.id, 'google');
+
+    if (existing) {
+      db.get().prepare(`
+        UPDATE calendar_events
+        SET title = ?, description = ?, start_datetime = ?, end_datetime = ?,
+            all_day = ?, location = ?, recurrence_rule = ?
+        WHERE id = ?
+      `).run(title, description, startDt, endDt, allDay ? 1 : 0, location, rrule, existing.id);
+    } else {
+      db.get().prepare(`
+        INSERT INTO calendar_events
+          (title, description, start_datetime, end_datetime, all_day,
+           location, color, external_calendar_id, external_source, recurrence_rule, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'google', ?, 1)
+      `).run(title, description, startDt, endDt, allDay ? 1 : 0, location, GOOGLE_COLOR, item.id, rrule);
+    }
+  });
+
+  for (const item of items) {
+    try {
+      insertOrUpdate(item);
+    } catch (err) {
+      log.error(`Upsert-Fehler für Event ${item.id}:`, err.message);
+    }
+  }
+}
+
+// --------------------------------------------------------
+// Helfer: lokales Event → Google Calendar Event Format
+// --------------------------------------------------------
+
+function localEventToGoogle(event) {
+  const allDay = !!event.all_day;
+  const gEvent = {
+    summary:     event.title,
+    description: event.description || undefined,
+    location:    event.location    || undefined,
+  };
+
+  if (allDay) {
+    gEvent.start = { date: event.start_datetime.slice(0, 10) };
+    gEvent.end   = { date: event.end_datetime ? event.end_datetime.slice(0, 10) : event.start_datetime.slice(0, 10) };
+  } else {
+    gEvent.start = { dateTime: event.start_datetime, timeZone: 'Europe/Berlin' };
+    gEvent.end   = { dateTime: event.end_datetime   || event.start_datetime, timeZone: 'Europe/Berlin' };
+  }
+
+  if (event.recurrence_rule) {
+    gEvent.recurrence = [event.recurrence_rule];
+  }
+
+  return gEvent;
+}
+
+export { getAuthUrl, handleCallback, getStatus, disconnect, sync };

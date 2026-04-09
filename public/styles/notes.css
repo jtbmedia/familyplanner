@@ -1,0 +1,335 @@
+/**
+ * Modul: Pinnwand / Notizen (Notes)
+ * Zweck: Styles für Masonry-Grid, Sticky-Note-Karten, Modal
+ * Abhängigkeiten: tokens.css, layout.css
+ */
+
+/* --------------------------------------------------------
+ * Modul-Akzent
+ * -------------------------------------------------------- */
+.notes-page { --module-accent: var(--module-notes); }
+
+/* --------------------------------------------------------
+ * Seiten-Layout
+ * -------------------------------------------------------- */
+.notes-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-area-inset-top) - var(--nav-bottom-height) - var(--safe-area-inset-bottom));
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .notes-page { height: 100dvh; }
+}
+
+/* --------------------------------------------------------
+ * Header / Toolbar
+ * -------------------------------------------------------- */
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  flex-shrink: 0;
+  gap: var(--space-3);
+  border-top: 3px solid var(--module-accent);
+}
+
+.notes-toolbar__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.notes-toolbar__search {
+  position: relative;
+  flex: 1;
+  max-width: 280px;
+}
+
+.notes-toolbar__search-icon {
+  position: absolute;
+  left: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.notes-toolbar__search-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-2) var(--space-2) calc(var(--space-2) * 2 + 16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  outline-offset: 2px;
+}
+
+.notes-toolbar__search-input:focus {
+  outline: 2px solid var(--color-accent);
+  border-color: transparent;
+}
+
+@media (min-width: 1024px) {
+  .notes-toolbar__search-input { font-size: var(--text-sm); }
+}
+
+/* --------------------------------------------------------
+ * Masonry-Grid
+ * -------------------------------------------------------- */
+.notes-grid {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-4);
+  columns: 2;
+  column-gap: var(--space-3);
+}
+
+@media (min-width: 600px) {
+  .notes-grid { columns: 3; }
+}
+
+@media (min-width: 900px) {
+  .notes-grid { columns: 4; }
+}
+
+@media (min-width: 1200px) {
+  .notes-grid { columns: 5; }
+}
+
+/* --------------------------------------------------------
+ * Notiz-Karte
+ * -------------------------------------------------------- */
+.note-card {
+  break-inside: avoid;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+  position: relative;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.note-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.note-card--pinned {
+  box-shadow: var(--shadow-md);
+}
+
+.note-card__pin {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-overlay-light);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+  color: inherit;
+}
+
+.note-card__pin::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+.note-card--pinned .note-card__pin {
+  opacity: 1;
+  background: var(--color-overlay-light);
+}
+
+.note-card:hover .note-card__pin {
+  opacity: 1;
+}
+
+.note-card__pin:hover {
+  background: var(--color-overlay);
+}
+
+.note-card__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-1);
+  color: inherit;
+  padding-right: var(--space-6);
+}
+
+.note-card__content {
+  font-size: var(--text-sm);
+  line-height: var(--line-height-relaxed);
+  color: inherit;
+  opacity: 0.78;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* Markdown-light: fett, kursiv, Listen */
+.note-card__content strong { font-weight: var(--font-weight-bold); }
+.note-card__content em     { font-style: italic; }
+
+.note-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid currentColor;
+  opacity: 0.55;
+}
+
+.note-card__creator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: inherit;
+}
+
+.note-card__avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-on-accent);
+  flex-shrink: 0;
+}
+
+.note-card__delete {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-overlay-light);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: inherit;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+}
+
+.note-card__delete::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+.note-card:hover .note-card__delete {
+  opacity: 1;
+}
+
+.note-card__delete:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+
+/* --------------------------------------------------------
+ * Notes-Modal Content-Styles (Overlay/Panel via shared modal.js)
+ * -------------------------------------------------------- */
+
+/* Farb-Auswahl */
+.note-color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.note-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  position: relative;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.note-color-swatch::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: var(--radius-full);
+}
+
+.note-color-swatch:hover       { transform: scale(1.15); }
+.note-color-swatch--active     { border-color: var(--color-text-primary); transform: scale(1.1); }
+
+/* --------------------------------------------------------
+ * Formatierungs-Toolbar im Notiz-Editor
+ * -------------------------------------------------------- */
+.note-format-toolbar {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1.5px solid var(--color-border);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background-color: var(--color-surface-2);
+}
+
+.note-format-toolbar + .form-input {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.note-format-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  font-size: var(--text-sm);
+  padding: 0;
+}
+
+.note-format-btn:hover {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.note-format-btn--sep {
+  width: 1px;
+  background-color: var(--color-border);
+  margin: var(--space-1) var(--space-1);
+  cursor: default;
+}
+
+.note-format-btn--sep:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+

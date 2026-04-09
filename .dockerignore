@@ -1,0 +1,37 @@
+node_modules
+.git
+.github
+.claude
+.worktrees
+.env
+.env.*
+
+# Database files (never include real data in image)
+*.db
+*.db-shm
+*.db-wal
+.nvmrc
+.gitignore
+.dockerignore
+
+# Documentation (not needed at runtime)
+docs/
+
+# Tests
+test-*.js
+test-*.mjs
+coverage/
+
+# Scripts (dev-only)
+scripts/
+
+# Markdown files (README, CHANGELOG, etc.)
+*.md
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

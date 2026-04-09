@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oikos - The Self-Hosted Family Planner</title>
+  <meta name="description" content="A privacy-first, self-hosted family planner with tasks, shopping lists, meal planning, calendar sync, budget tracking, and more. No cloud, no tracking, your data.">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Oikos - The Self-Hosted Family Planner">
+  <meta property="og:description" content="A privacy-first, self-hosted family planner. Tasks, shopping, meals, calendar sync, budget - all self-hosted, no cloud dependency.">
+  <meta property="og:image" content="https://ulsklyc.github.io/oikos/og-image.png">
+  <meta property="og:url" content="https://ulsklyc.github.io/oikos/">
+  <meta property="og:site_name" content="Oikos">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Oikos - The Self-Hosted Family Planner">
+  <meta name="twitter:description" content="A privacy-first, self-hosted family planner. Tasks, shopping, meals, calendar sync, budget - all self-hosted.">
+  <meta name="twitter:image" content="https://ulsklyc.github.io/oikos/twitter-image.png">
+
+  <link rel="canonical" href="https://ulsklyc.github.io/oikos/">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+
+  <!-- Fonts: Fraunces for display, system stack for body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== Reset ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ===== Tokens ===== */
+    :root {
+      --font-display: 'Fraunces', 'Georgia', serif;
+      --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+      /* Light theme */
+      --bg: #FAFAF8;
+      --bg-alt: #F5F4F1;
+      --surface: #FFFFFF;
+      --surface-border: #E8E7E2;
+      --text-primary: #1C1C1A;
+      --text-secondary: #6C6B67;
+      --text-tertiary: #8E8D89;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --accent-light: #EFF6FF;
+      --accent-subtle: #DBEAFE;
+      --success: #15803D;
+      --warning: #B45309;
+      --code-bg: #1C1C1A;
+      --code-text: #E2E1DC;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.03);
+      --shadow-md: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.04);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --screenshot-variant: 'light';
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #1A1A18;
+      --bg-alt: #222220;
+      --surface: #2A2A28;
+      --surface-border: #3D3D3A;
+      --text-primary: #F5F4F1;
+      --text-secondary: #AEADB0;
+      --text-tertiary: #8E8D89;
+      --accent: #60A5FA;
+      --accent-hover: #3B82F6;
+      --accent-light: #1E3A5F;
+      --accent-subtle: #1E3050;
+      --success: #4ADE80;
+      --warning: #F59E0B;
+      --code-bg: #121211;
+      --code-text: #C8C7C3;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.25);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.45);
+      --screenshot-variant: 'dark';
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1A1A18;
+        --bg-alt: #222220;
+        --surface: #2A2A28;
+        --surface-border: #3D3D3A;
+        --text-primary: #F5F4F1;
+        --text-secondary: #AEADB0;
+        --text-tertiary: #8E8D89;
+        --accent: #60A5FA;
+        --accent-hover: #3B82F6;
+        --accent-light: #1E3A5F;
+        --accent-subtle: #1E3050;
+        --success: #4ADE80;
+        --warning: #F59E0B;
+        --code-bg: #121211;
+        --code-text: #C8C7C3;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.25);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.45);
+        --screenshot-variant: 'dark';
+      }
+    }
+
+    /* ===== Base ===== */
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* ===== Layout ===== */
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ===== Nav ===== */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--surface-border);
+      height: 56px;
+    }
+    .nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .nav-logo:hover { text-decoration: none; }
+    .nav-logo svg { width: 28px; height: 28px; }
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--surface-border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .nav-btn:hover {
+      background: var(--surface);
+      color: var(--text-primary);
+      border-color: var(--text-tertiary);
+    }
+    .nav-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .nav-btn svg { width: 16px; height: 16px; }
+    .nav-github {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+    .nav-github:hover {
+      background: var(--accent-hover);
+      color: #fff;
+      border-color: var(--accent-hover);
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+      padding: 120px 0 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .hero-tagline {
+      font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto 12px;
+      font-weight: 400;
+    }
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--text-tertiary);
+      max-width: 560px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background 0.2s ease, transform 0.15s ease;
+      box-shadow: var(--shadow-md);
+    }
+    .hero-cta:hover {
+      background: var(--accent-hover);
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+    .hero-cta:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .hero-cta svg { width: 20px; height: 20px; }
+    .hero-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--surface-border);
+    }
+
+    /* ===== Section shared ===== */
+    section {
+      padding: 80px 0;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+    }
+    .section-desc {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+      max-width: 560px;
+      line-height: 1.7;
+    }
+    .section-header {
+      margin-bottom: 48px;
+    }
+    .section-header-centered {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-header-centered .section-desc {
+      margin: 0 auto;
+    }
+
+    /* ===== Features ===== */
+    .features-section { background: var(--bg-alt); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 14px;
+      background: var(--accent-light);
+    }
+    .feature-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ===== Screenshots ===== */
+    .screenshots-section {
+      overflow: hidden;
+    }
+    .screenshots-track {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 4px 20px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface-border) transparent;
+    }
+    .screenshots-track::-webkit-scrollbar { height: 6px; }
+    .screenshots-track::-webkit-scrollbar-track { background: transparent; }
+    .screenshots-track::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 3px; }
+    .screenshot-item {
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+      position: relative;
+    }
+    .screenshot-item img {
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      height: 480px;
+      width: auto;
+      object-fit: contain;
+    }
+    .screenshot-label {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+
+    /* ===== Philosophy ===== */
+    .philosophy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .philosophy-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .philosophy-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .philosophy-item h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .philosophy-item p {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===== Setup ===== */
+    .setup-section { background: var(--bg-alt); }
+    .setup-content {
+      max-width: 640px;
+    }
+    .code-block {
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      margin: 20px 0;
+      position: relative;
+    }
+    .code-block .comment { color: #6C6B67; }
+    .code-block .cmd { color: #60A5FA; }
+    .setup-note {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .setup-note a {
+      font-weight: 500;
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      border-top: 1px solid var(--surface-border);
+      padding: 40px 0;
+      text-align: center;
+    }
+    .footer-heart {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      font-size: 0.8125rem;
+    }
+    .footer-links a {
+      color: var(--text-tertiary);
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ===== Animations ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .hero { padding: 100px 0 60px; }
+      section { padding: 60px 0; }
+      .features-grid { grid-template-columns: 1fr; }
+      .philosophy-grid { grid-template-columns: 1fr; }
+      .screenshot-item img { height: 380px; }
+      .nav-github span { display: none; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ===== No JS fallback ===== */
+    .reveal { opacity: 1; transform: none; }
+    .js .reveal { opacity: 0; transform: translateY(20px); }
+    .js .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav" role="navigation" aria-label="Main">
+    <div class="container">
+      <a href="#" class="nav-logo" aria-label="Oikos Home">
+        <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><linearGradient id="navbg" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0A84FF"/><stop offset="100%" stop-color="#006AE0"/></linearGradient></defs>
+          <rect width="160" height="160" rx="36" fill="url(#navbg)"/>
+          <path d="M80 36L36 72V120C36 122.2 37.8 124 40 124H68V96H92V124H120C122.2 124 124 122.2 124 120V72L80 36Z" fill="white"/>
+          <rect x="100" y="46" width="12" height="22" rx="2" fill="white"/>
+        </svg>
+        Oikos
+      </a>
+      <div class="nav-controls">
+        <button class="nav-btn" id="langToggle" type="button" aria-label="Switch language">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="langLabel">DE</span>
+        </button>
+        <button class="nav-btn" id="themeToggle" type="button" aria-label="Toggle theme">
+          <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a href="https://github.com/ulsklyc/oikos" class="nav-btn nav-github" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span data-i18n="nav_github">GitHub</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <img src="logo.svg" alt="Oikos Logo" class="hero-logo" width="80" height="80">
+    <h1 data-i18n="hero_title">Oikos</h1>
+    <p class="hero-tagline" data-i18n="hero_tagline">The self-hosted family planner</p>
+    <p class="hero-desc" data-i18n="hero_desc">Manage your household together. Tasks, shopping, meals, calendar, budget - all in one place. Self-hosted, private, yours.</p>
+    <a href="https://github.com/ulsklyc/oikos" class="hero-cta" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      <span data-i18n="hero_cta">View on GitHub</span>
+    </a>
+    <div class="hero-badges">
+      <span class="badge">MIT License</span>
+      <span class="badge">Docker Ready</span>
+      <span class="badge">PWA</span>
+      <span class="badge" data-i18n="badge_nocloud">No Cloud Required</span>
+    </div>
+  </header>
+
+  <!-- Features -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header-centered reveal">
+        <p class="section-label" data-i18n="features_label">Features</p>
+        <h2 class="section-title" data-i18n="features_title">Everything your household needs</h2>
+        <p class="section-desc" data-i18n="features_desc">A complete set of tools designed for families, built to work together seamlessly.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">&#x1F4CB;</div>
+          <h3 data-i18n="feat_tasks_title">Task Management</h3>
+          <p data-i18n="feat_tasks_desc">Shared tasks with deadlines, priorities, subtasks, recurring schedules, and a Kanban board with one-tap status buttons.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon" aria-hidden="true">&#x1F6D2;</div>
+          <h3 data-i18n="feat_shopping_title">Shopping Lists</h3>
+          <p data-i18n="feat_shopping_desc">Collaborative lists with aisle categories and one-click import from your meal plans.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon" aria-hidden="true">&#x1F37D;&#xFE0F;</div>
+          <h3 data-i18n="feat_meals_title">Meal Planning</h3>
+          <p data-i18n="feat_meals_desc">Weekly drag-and-drop planner with ingredient lists and automatic shopping list export.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon" aria-hidden="true">&#x1F4C5;</div>
+          <h3 data-i18n="feat_calendar_title">Calendar Sync</h3>
+          <p data-i18n="feat_calendar_desc">Two-way sync with Google Calendar (OAuth) and Apple iCloud (CalDAV). All events in one place.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">&#x1F4B0;</div>
+          <h3 data-i18n="feat_budget_title">Budget Tracking</h3>
+          <p data-i18n="feat_budget_desc">Track income and expenses, configurable currency (13 options), recurring entries, monthly trends, and CSV export.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon" aria-hidden="true">&#x1F4CC;</div>
+          <h3 data-i18n="feat_notes_title">Notes</h3>
+          <p data-i18n="feat_notes_desc">Colored sticky notes with Markdown support. Perfect for family memos, recipes, and quick reminders.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon" aria-hidden="true">&#x1F4D6;</div>
+          <h3 data-i18n="feat_contacts_title">Contacts</h3>
+          <p data-i18n="feat_contacts_desc">Shared family contact directory with vCard import and export.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon" aria-hidden="true">&#x1F310;</div>
+          <h3 data-i18n="feat_pwa_title">Works Everywhere</h3>
+          <p data-i18n="feat_pwa_desc">Installable as a PWA on any device. Works offline, supports dark mode, responsive from phone to desktop.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="screenshots-section" id="screenshots">
+    <div class="container">
+      <div class="section-header-centered reveal">
+        <p class="section-label" data-i18n="screenshots_label">Preview</p>
+        <h2 class="section-title" data-i18n="screenshots_title">See it in action</h2>
+        <p class="section-desc" data-i18n="screenshots_desc">A clean, intuitive interface that adapts to your device and preferred theme.</p>
+      </div>
+    </div>
+    <div class="screenshots-track" role="region" aria-label="Screenshots" tabindex="0">
+      <div class="screenshot-item reveal">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-dashboard-2.png" data-dark="screenshots/mobile-dark/mobile-dark-dashboard-2.png" src="screenshots/mobile-light/mobile-light-dashboard-2.png" alt="Oikos Dashboard" width="270" height="480" loading="lazy">
+        <p class="screenshot-label">Dashboard</p>
+      </div>
+      <div class="screenshot-item reveal reveal-delay-1">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-tasks-2.png" data-dark="screenshots/mobile-dark/mobile-dark-tasks-2.png" src="screenshots/mobile-light/mobile-light-tasks-2.png" alt="Task Management" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_tasks_title">Tasks</p>
+      </div>
+      <div class="screenshot-item reveal reveal-delay-2">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-meal.png" data-dark="screenshots/mobile-dark/mobile-dark-meal.png" src="screenshots/mobile-light/mobile-light-meal.png" alt="Meal Planning" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_meals_title">Meals</p>
+      </div>
+      <div class="screenshot-item reveal reveal-delay-3">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-shopping.png" data-dark="screenshots/mobile-dark/mobile-dark-shopping.png" src="screenshots/mobile-light/mobile-light-shopping.png" alt="Shopping Lists" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_shopping_title">Shopping</p>
+      </div>
+      <div class="screenshot-item reveal">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-calendar.png" data-dark="screenshots/mobile-dark/mobile-dark-calendar.png" src="screenshots/mobile-light/mobile-light-calendar.png" alt="Calendar" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_calendar_title">Calendar</p>
+      </div>
+      <div class="screenshot-item reveal reveal-delay-1">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-budget-2.png" data-dark="screenshots/mobile-dark/mobile-dark-budget-2.png" src="screenshots/mobile-light/mobile-light-budget-2.png" alt="Budget Tracking" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_budget_title">Budget</p>
+      </div>
+      <div class="screenshot-item reveal reveal-delay-2">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-notes-2.png" data-dark="screenshots/mobile-dark/mobile-dark-notes-2.png" src="screenshots/mobile-light/mobile-light-notes-2.png" alt="Notes" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_notes_title">Notes</p>
+      </div>
+      <div class="screenshot-item reveal reveal-delay-3">
+        <img class="screenshot-img" data-light="screenshots/mobile-light/mobile-light-contacts-2.png" data-dark="screenshots/mobile-dark/mobile-dark-contacts-2.png" src="screenshots/mobile-light/mobile-light-contacts-2.png" alt="Contacts" width="270" height="480" loading="lazy">
+        <p class="screenshot-label" data-i18n="feat_contacts_title">Contacts</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Philosophy -->
+  <section class="features-section" id="philosophy">
+    <div class="container">
+      <div class="section-header-centered reveal">
+        <p class="section-label" data-i18n="philosophy_label">Philosophy</p>
+        <h2 class="section-title" data-i18n="philosophy_title">Built different, on purpose</h2>
+        <p class="section-desc" data-i18n="philosophy_desc">No subscriptions, no vendor lock-in, no data leaving your home.</p>
+      </div>
+      <div class="philosophy-grid">
+        <div class="philosophy-item reveal">
+          <div class="philosophy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="phil_privacy_title">Privacy First</h3>
+            <p data-i18n="phil_privacy_desc">AES-256 encrypted database with SQLCipher. Zero telemetry. Your data never leaves your server.</p>
+          </div>
+        </div>
+        <div class="philosophy-item reveal reveal-delay-1">
+          <div class="philosophy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="phil_selfhost_title">Fully Self-Hosted</h3>
+            <p data-i18n="phil_selfhost_desc">Runs on a Raspberry Pi, a NAS, or any server. Docker makes setup a one-liner.</p>
+          </div>
+        </div>
+        <div class="philosophy-item reveal reveal-delay-2">
+          <div class="philosophy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="phil_nobuild_title">Zero Build Step</h3>
+            <p data-i18n="phil_nobuild_desc">Pure ES modules, vanilla JS, plain CSS. No bundler, no transpiler, no framework. Ships what you write.</p>
+          </div>
+        </div>
+        <div class="philosophy-item reveal reveal-delay-3">
+          <div class="philosophy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 data-i18n="phil_open_title">Open Source</h3>
+            <p data-i18n="phil_open_desc">MIT licensed. Inspect, modify, extend, contribute. Built in the open for families who care about transparency.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Getting Started -->
+  <section class="setup-section" id="setup">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label" data-i18n="setup_label">Get Started</p>
+        <h2 class="section-title" data-i18n="setup_title">Up and running in minutes</h2>
+      </div>
+      <div class="setup-content reveal">
+        <div class="code-block" role="region" aria-label="Setup commands">
+<span class="comment"># Option A — pre-built image (no clone required)</span>
+curl -O https://raw.githubusercontent.com/ulsklyc/oikos/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/ulsklyc/oikos/main/.env.example
+cp .env.example .env     <span class="comment"># set SESSION_SECRET and DB_ENCRYPTION_KEY</span>
+<span class="cmd">docker compose up -d</span>
+<span class="cmd">docker compose exec oikos node setup.js</span>
+        </div>
+        <p class="setup-note" data-i18n="setup_note">Then open <code>http://localhost:3000</code> and log in. Need help? The <a href="https://github.com/ulsklyc/oikos/blob/main/docs/installation.md" target="_blank" rel="noopener">Installation Guide</a> covers everything from installing Docker to HTTPS, backups, and troubleshooting.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer-heart" data-i18n="footer_heart">Built with care for families who value privacy and simplicity.</p>
+      <div class="footer-links">
+        <a href="https://github.com/ulsklyc/oikos" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/ulsklyc/oikos/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        <a href="https://github.com/ulsklyc/oikos/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" data-i18n="footer_contrib">Contributing</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      'use strict';
+
+      /* ===== Translations ===== */
+      var i18n = {
+        en: {
+          nav_github: 'GitHub',
+          hero_title: 'Oikos',
+          hero_tagline: 'The self-hosted family planner',
+          hero_desc: 'Manage your household together. Tasks, shopping, meals, calendar, budget \u2014 all in one place. Self-hosted, private, yours.',
+          hero_cta: 'View on GitHub',
+          badge_nocloud: 'No Cloud Required',
+          features_label: 'Features',
+          features_title: 'Everything your household needs',
+          features_desc: 'A complete set of tools designed for families, built to work together seamlessly.',
+          feat_tasks_title: 'Task Management',
+          feat_tasks_desc: 'Shared tasks with deadlines, priorities, subtasks, recurring schedules, and a Kanban board with one-tap status buttons.',
+          feat_shopping_title: 'Shopping Lists',
+          feat_shopping_desc: 'Collaborative lists with aisle categories and one-click import from your meal plans.',
+          feat_meals_title: 'Meal Planning',
+          feat_meals_desc: 'Weekly drag-and-drop planner with ingredient lists and automatic shopping list export.',
+          feat_calendar_title: 'Calendar Sync',
+          feat_calendar_desc: 'Two-way sync with Google Calendar (OAuth) and Apple iCloud (CalDAV). All events in one place.',
+          feat_budget_title: 'Budget Tracking',
+          feat_budget_desc: 'Track income and expenses, configurable currency (13 options), recurring entries, monthly trends, and CSV export.',
+          feat_notes_title: 'Notes',
+          feat_notes_desc: 'Colored sticky notes with Markdown support. Perfect for family memos, recipes, and quick reminders.',
+          feat_contacts_title: 'Contacts',
+          feat_contacts_desc: 'Shared family contact directory with vCard import and export.',
+          feat_pwa_title: 'Works Everywhere',
+          feat_pwa_desc: 'Installable as a PWA on any device. Works offline, supports dark mode, responsive from phone to desktop.',
+          screenshots_label: 'Preview',
+          screenshots_title: 'See it in action',
+          screenshots_desc: 'A clean, intuitive interface that adapts to your device and preferred theme.',
+          philosophy_label: 'Philosophy',
+          philosophy_title: 'Built different, on purpose',
+          philosophy_desc: 'No subscriptions, no vendor lock-in, no data leaving your home.',
+          phil_privacy_title: 'Privacy First',
+          phil_privacy_desc: 'AES-256 encrypted database with SQLCipher. Zero telemetry. Your data never leaves your server.',
+          phil_selfhost_title: 'Fully Self-Hosted',
+          phil_selfhost_desc: 'Runs on a Raspberry Pi, a NAS, or any server. Docker makes setup a one-liner.',
+          phil_nobuild_title: 'Zero Build Step',
+          phil_nobuild_desc: 'Pure ES modules, vanilla JS, plain CSS. No bundler, no transpiler, no framework. Ships what you write.',
+          phil_open_title: 'Open Source',
+          phil_open_desc: 'MIT licensed. Inspect, modify, extend, contribute. Built in the open for families who care about transparency.',
+          setup_label: 'Get Started',
+          setup_title: 'Up and running in minutes',
+          setup_note: 'Then open <code>http://localhost:3000</code> and log in. Want to build from source or set up HTTPS? The <a href="https://github.com/ulsklyc/oikos/blob/main/docs/installation.md" target="_blank" rel="noopener">Installation Guide</a> covers all options.',
+          footer_heart: 'Built with care for families who value privacy and simplicity.',
+          footer_contrib: 'Contributing'
+        },
+        de: {
+          nav_github: 'GitHub',
+          hero_title: 'Oikos',
+          hero_tagline: 'Der selbstgehostete Familienplaner',
+          hero_desc: 'Organisiert euren Haushalt gemeinsam. Aufgaben, Einkauf, Mahlzeiten, Kalender, Budget \u2014 alles an einem Ort. Selbstgehostet, privat, eures.',
+          hero_cta: 'Auf GitHub ansehen',
+          badge_nocloud: 'Keine Cloud n\u00f6tig',
+          features_label: 'Funktionen',
+          features_title: 'Alles, was euer Haushalt braucht',
+          features_desc: 'Ein vollst\u00e4ndiges Werkzeugset f\u00fcr Familien \u2014 nahtlos aufeinander abgestimmt.',
+          feat_tasks_title: 'Aufgabenverwaltung',
+          feat_tasks_desc: 'Gemeinsame Aufgaben mit Fristen, Priorit\u00e4ten, Unteraufgaben, wiederkehrenden Terminen und Kanban-Board mit Ein-Tipp-Status-Buttons.',
+          feat_shopping_title: 'Einkaufslisten',
+          feat_shopping_desc: 'Gemeinsame Listen mit Gang-Kategorien und Ein-Klick-Import aus Mahlzeitenpl\u00e4nen.',
+          feat_meals_title: 'Mahlzeitenplanung',
+          feat_meals_desc: 'W\u00f6chentlicher Drag-and-Drop-Planer mit Zutatenlisten und automatischem Einkaufslisten-Export.',
+          feat_calendar_title: 'Kalender-Sync',
+          feat_calendar_desc: 'Zwei-Wege-Sync mit Google Calendar (OAuth) und Apple iCloud (CalDAV). Alle Termine an einem Ort.',
+          feat_budget_title: 'Budgetverwaltung',
+          feat_budget_desc: 'Einnahmen und Ausgaben verfolgen, konfigurierbare W\u00e4hrung (13 Optionen), wiederkehrende Eintr\u00e4ge, monatliche Trends und CSV-Export.',
+          feat_notes_title: 'Notizen',
+          feat_notes_desc: 'Farbige Haftnotizen mit Markdown. Perfekt f\u00fcr Familien-Memos, Rezepte und schnelle Erinnerungen.',
+          feat_contacts_title: 'Kontakte',
+          feat_contacts_desc: 'Gemeinsames Familien-Kontaktverzeichnis mit vCard-Import und -Export.',
+          feat_pwa_title: '\u00dcberall nutzbar',
+          feat_pwa_desc: 'Installierbar als PWA auf jedem Ger\u00e4t. Funktioniert offline, unterst\u00fctzt Dark Mode, responsive vom Handy bis Desktop.',
+          screenshots_label: 'Vorschau',
+          screenshots_title: 'So sieht es aus',
+          screenshots_desc: 'Eine klare, intuitive Oberfl\u00e4che, die sich an euer Ger\u00e4t und bevorzugtes Theme anpasst.',
+          philosophy_label: 'Philosophie',
+          philosophy_title: 'Bewusst anders gebaut',
+          philosophy_desc: 'Keine Abos, kein Vendor-Lock-in, keine Daten, die euer Zuhause verlassen.',
+          phil_privacy_title: 'Datenschutz zuerst',
+          phil_privacy_desc: 'AES-256-verschl\u00fcsselte Datenbank mit SQLCipher. Keine Telemetrie. Eure Daten verlassen nie euren Server.',
+          phil_selfhost_title: 'Vollst\u00e4ndig selbstgehostet',
+          phil_selfhost_desc: 'L\u00e4uft auf einem Raspberry Pi, NAS oder jedem Server. Docker macht das Setup zum Einzeiler.',
+          phil_nobuild_title: 'Kein Build-Schritt',
+          phil_nobuild_desc: 'Pure ES-Module, Vanilla JS, reines CSS. Kein Bundler, kein Transpiler, kein Framework.',
+          phil_open_title: 'Open Source',
+          phil_open_desc: 'MIT-lizenziert. Einsehen, anpassen, erweitern, beitragen. Offen gebaut f\u00fcr Familien, die Transparenz sch\u00e4tzen.',
+          setup_label: 'Loslegen',
+          setup_title: 'In Minuten einsatzbereit',
+          setup_note: 'Dann <code>http://localhost:3000</code> \u00f6ffnen und einloggen. Build aus dem Quellcode oder HTTPS einrichten? Die <a href="https://github.com/ulsklyc/oikos/blob/main/docs/installation.md" target="_blank" rel="noopener">Installationsanleitung</a> erkl\u00e4rt alle Optionen.',
+          footer_heart: 'Mit Sorgfalt gebaut f\u00fcr Familien, die Privatsph\u00e4re und Einfachheit sch\u00e4tzen.',
+          footer_contrib: 'Mitmachen'
+        }
+      };
+
+      /* ===== State ===== */
+      var currentLang = localStorage.getItem('oikos-lang') || 'en';
+      var currentTheme = localStorage.getItem('oikos-theme'); // null = system
+
+      /* ===== Theme ===== */
+      function isDark() {
+        if (currentTheme === 'dark') return true;
+        if (currentTheme === 'light') return false;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      function applyTheme() {
+        var dark = isDark();
+        if (currentTheme) {
+          document.documentElement.setAttribute('data-theme', currentTheme);
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+        }
+        document.getElementById('themeIconSun').style.display = dark ? 'none' : 'block';
+        document.getElementById('themeIconMoon').style.display = dark ? 'block' : 'none';
+        updateScreenshots(dark);
+      }
+
+      function updateScreenshots(dark) {
+        var imgs = document.querySelectorAll('.screenshot-img');
+        var variant = dark ? 'dark' : 'light';
+        for (var i = 0; i < imgs.length; i++) {
+          imgs[i].src = imgs[i].getAttribute('data-' + variant);
+        }
+      }
+
+      document.getElementById('themeToggle').addEventListener('click', function() {
+        var dark = isDark();
+        currentTheme = dark ? 'light' : 'dark';
+        localStorage.setItem('oikos-theme', currentTheme);
+        applyTheme();
+      });
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        if (!currentTheme) applyTheme();
+      });
+
+      /* ===== Language ===== */
+      function applyLang() {
+        document.documentElement.lang = currentLang;
+        var strings = i18n[currentLang];
+        var els = document.querySelectorAll('[data-i18n]');
+        for (var i = 0; i < els.length; i++) {
+          var key = els[i].getAttribute('data-i18n');
+          if (strings[key]) {
+            if (key === 'setup_note') {
+              els[i].innerHTML = strings[key];
+            } else {
+              els[i].textContent = strings[key];
+            }
+          }
+        }
+        document.getElementById('langLabel').textContent = currentLang === 'en' ? 'DE' : 'EN';
+        document.title = currentLang === 'en'
+          ? 'Oikos \u2014 The Self-Hosted Family Planner'
+          : 'Oikos \u2014 Der selbstgehostete Familienplaner';
+      }
+
+      document.getElementById('langToggle').addEventListener('click', function() {
+        currentLang = currentLang === 'en' ? 'de' : 'en';
+        localStorage.setItem('oikos-lang', currentLang);
+        applyLang();
+      });
+
+      /* ===== Scroll Reveal ===== */
+      document.documentElement.classList.add('js');
+
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function(entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) {
+              entries[i].target.classList.add('visible');
+              observer.unobserve(entries[i].target);
+            }
+          }
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        var reveals = document.querySelectorAll('.reveal');
+        for (var i = 0; i < reveals.length; i++) {
+          observer.observe(reveals[i]);
+        }
+      }
+
+      /* ===== Init ===== */
+      applyTheme();
+      applyLang();
+    })();
+  </script>
+</body>
+</html>

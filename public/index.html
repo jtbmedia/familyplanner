@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Viewport: edge-to-edge, kein Zoom (PWA-native feel) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
+
+  <!-- PWA / Theme -->
+  <meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1C1C1E" media="(prefers-color-scheme: dark)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- iOS-spezifisch -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Oikos" />
+  <meta name="description" content="Oikos - Familienplaner" />
+  <title>Oikos</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+
+  <!-- DNS-Prefetch für externe Ressourcen -->
+  <link rel="dns-prefetch" href="https://openweathermap.org" />
+
+  <!-- Preload: kritische ES-Module (modulepreload ist korrekt für type="module") -->
+  <link rel="modulepreload" href="/api.js" />
+  <link rel="modulepreload" href="/router.js" />
+  <link rel="modulepreload" href="/rrule-ui.js" />
+
+  <!-- Styles (Basis - seitenspezifische CSS wird vom Router on-demand geladen) -->
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/reset.css" />
+  <link rel="stylesheet" href="/styles/pwa.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/login.css" />
+
+  <!-- Theme: Vor CSS-Rendering anwenden (Flash-Prevention) -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('oikos-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <!-- Lucide Icons (lokal, v0.469.0) -->
+  <script src="/lucide.min.js"></script>
+</head>
+<body>
+  <!-- App-Shell - wird durch JavaScript gefüllt -->
+  <div id="app" class="app-shell">
+    <!-- Skeleton-Loading während Initialisierung -->
+    <div id="app-loading" class="app-loading" aria-live="polite" aria-label="Lade Oikos…">
+      <div class="app-loading__logo">Oikos</div>
+    </div>
+  </div>
+
+  <!-- Module (ES-Module, kein Bundler) -->
+  <script type="module" src="/api.js"></script>
+  <script type="module" src="/router.js"></script>
+
+  <!-- Install-Prompt (PWA) -->
+  <oikos-install-prompt></oikos-install-prompt>
+  <script type="module" src="/components/oikos-install-prompt.js"></script>
+
+  <!-- Service Worker registrieren -->
+  <script src="/sw-register.js" defer></script>
+</body>
+</html>

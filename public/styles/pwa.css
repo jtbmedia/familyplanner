@@ -1,0 +1,79 @@
+/**
+ * Modul: PWA Native Feel
+ * Zweck: Natives Touch- und Scrollverhalten, Safe Areas, Touch-Targets
+ * Abhängigkeiten: tokens.css, layout.css
+ */
+
+/* ── Kein Rubber-Banding, kein Body-Scroll ──
+ * overflow: hidden verhindert, dass body scrollbar wird, falls ein
+ * Element minimal überläuft. overscroll-behavior: none deaktiviert
+ * Pull-to-Refresh und Rubber-Banding. */
+html, body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* ── Kein Tap-Highlight auf allen Elementen (Android Chrome) ──
+ * reset.css setzt es nur auf html; hier global für alle Elemente */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Safe Area Insets (Notch, Dynamic Island, Gesture Bar) ──
+ * Nur horizontale Safe Areas auf body. Vertikale Safe Areas werden über
+ * .app-shell (padding-top im Standalone-Modus) und die Seiten-/Nav-Berechnungen
+ * (padding-bottom via --safe-area-inset-bottom) gehandhabt.
+ * KEIN body padding-top/bottom - das würde .app-shell (height: 100dvh)
+ * um den Safe-Area-Betrag aus dem Viewport schieben und Scroll-Bleed erzeugen. */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── Bottom Nav über der Gesture Bar ──
+ * layout.css nutzt --safe-area-inset-bottom Token;
+ * hier als Fallback direkt via env() */
+.nav-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Touch-Targets werden über tokens.css (--target-sm/md/lg) und
+ * komponentenspezifische Styles gehandhabt - siehe Redesign Phase E.
+ * Keine globale min-size-Regel hier, da sie mit dem bestehenden
+ * Touch-Target-System kollidiert (::before-Expansion auf kleinen Elementen). */
+
+/* ── Smooth Momentum-Scrolling in scrollbaren Containern ── */
+.scroll-container,
+.nav-bottom__scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ── Kein Text-Selection in UI-Elementen (nur in Content-Bereichen) ── */
+nav,
+.nav-bottom,
+.nav-sidebar,
+.cal-toolbar,
+.tasks-toolbar,
+.notes-toolbar,
+.contacts-toolbar,
+.modal-panel__header {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Standalone-Modus: Status-Bar-Bereich berücksichtigen ── */
+@media (display-mode: standalone) {
+  /* padding-top auf .app-shell (nicht body): So bleibt app-shell exakt 100dvh
+   * hoch und überläuft den Viewport nicht - body-padding hätte .app-shell
+   * nach unten verschoben und Scroll-Bleed verursacht. */
+  .app-shell {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Kein Scroll-Bleed - Content bleibt in seinem Container */
+  .app-content {
+    overscroll-behavior-y: contain;
+  }
+}

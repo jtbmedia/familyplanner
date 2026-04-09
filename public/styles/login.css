@@ -1,0 +1,57 @@
+/**
+ * Modul: Login-Seite
+ * Zweck: Styles für die Anmeldeseite
+ * Abhängigkeiten: tokens.css, reset.css, layout.css
+ */
+
+.login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  width: 100vw;
+  padding: var(--space-4);
+  background-color: var(--color-bg);
+}
+
+/* Hero-Bereich über dem Login-Formular */
+.login-hero {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.login-hero__title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-2);
+}
+
+.login-hero__tagline {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  max-width: 360px;
+  line-height: var(--line-height-relaxed, 1.6);
+}
+
+/* Login-Karte */
+.login-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-form__submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.login-error {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}

@@ -1,0 +1,14 @@
+name: Oikos
+website_url: "https://ulsklyc.github.io/oikos/"
+source_code_url: "https://github.com/ulsklyc/oikos"
+description: "Family planner with shared tasks, shopping lists, meal planning, calendar sync (Google & iCloud), budget tracking, notes, and contacts. PWA with offline support."
+licenses:
+  - MIT
+platforms:
+  - Nodejs
+  - Docker
+tags:
+  - Groupware
+  - Task Management & To-do Lists
+  - Money, Budgeting & Management
+  - Recipe Management

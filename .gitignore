@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Environment variables (NEVER commit)
+.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+logs/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Build artifacts & test coverage
+dist/
+.cache/
+coverage/
+
+# Local Docker volume
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code (contains local permissions and possibly tokens)
+.claude/
+
+# Git worktrees
+.worktrees/
+
+# Claude Code work documents (internal plans/specs, not for contributors)
+docs/superpowers/
+
+# Audit reports (generated per-session, not for version control)
+docs/audit-report-*.md
+docs/claude-md-audit.md
+docs/repo-audit-*.md
+
+# Text files with tokens/keys (safety net)
+*.txt
+!public/robots.txt
+CLAUDE.md

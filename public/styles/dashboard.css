@@ -1,0 +1,1007 @@
+/**
+ * Modul: Dashboard
+ * Zweck: Styles für das Dashboard - Begrüßung, Widget-Grid, alle Widget-Typen, FAB-Speed-Dial
+ * Abhängigkeiten: tokens.css, layout.css
+ */
+
+/* --------------------------------------------------------
+ * Modul-Akzent
+ * -------------------------------------------------------- */
+.dashboard {
+  --module-accent: var(--module-dashboard);
+}
+
+/* --------------------------------------------------------
+ * Dashboard-Layout
+ * -------------------------------------------------------- */
+.dashboard {
+  padding: var(--space-4);
+  padding-bottom: calc(var(--nav-bottom-height) + var(--safe-area-inset-bottom) + var(--space-16));
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .dashboard {
+    padding: var(--space-6) var(--space-8);
+    padding-bottom: var(--space-12);
+  }
+}
+
+@media (min-width: 1440px) {
+  .dashboard {
+    padding: var(--space-6) var(--space-10);
+  }
+}
+
+/* --------------------------------------------------------
+ * Widget-Grid
+ *
+ * Mobile:  1 Spalte
+ * Tablet:  2 Spalten
+ * Desktop: 3 Spalten
+ * Wide:    4 Spalten (ab 1440px)
+ * -------------------------------------------------------- */
+.dashboard__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .dashboard__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .widget--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+
+  .widget--wide {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1440px) {
+  .dashboard__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Wide-Widgets nehmen 2 von 4 Spalten ein */
+  .widget--wide {
+    grid-column: span 2;
+  }
+
+  /* Greeting-Widget über alle 4 Spalten */
+  .widget-greeting {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --------------------------------------------------------
+ * Begrüßungs-Widget
+ * -------------------------------------------------------- */
+.widget-greeting {
+  --greeting-from: var(--color-accent-active);
+  --greeting-to: var(--color-accent);
+  background: linear-gradient(135deg, var(--greeting-from), var(--greeting-to));
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  color: var(--color-text-on-accent);
+  grid-column: 1 / -1;
+}
+
+.widget-greeting__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0h);
+}
+
+.widget-greeting__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+@media (min-width: 1024px) {
+  .widget-greeting__title {
+    font-size: var(--text-2xl);
+  }
+}
+
+.widget-greeting__date {
+  font-size: var(--text-sm);
+  opacity: 0.85;
+}
+
+.widget-greeting__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.greeting-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-glass);
+  color: var(--color-text-on-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-0h) var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.greeting-chip--warn {
+  background: var(--color-danger-translucent);
+}
+
+/* --------------------------------------------------------
+ * Basis-Widget (Card)
+ *
+ * Kompaktes Padding: 12px Header, 12px Body.
+ * Internes Spacing: 8–12px (enger als vorher 16–24px).
+ * -------------------------------------------------------- */
+.widget {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.widget__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.widget__title-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent);
+}
+
+.widget__link {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0h);
+  transition: opacity var(--transition-fast);
+}
+
+.widget__link:hover {
+  opacity: 0.7;
+}
+
+.widget__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  line-height: 1;
+}
+
+.widget__body {
+  flex: 1;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+}
+
+.widget__empty {
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.widget__empty .empty-state__icon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-disabled);
+  margin-bottom: var(--space-1);
+}
+
+/* Widget hover lift (desktop) - dezent, max 1px */
+@media (min-width: 1024px) {
+  .widget {
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  }
+  .widget:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* --------------------------------------------------------
+ * Aufgaben-Widget
+ * Kompakte Items: 8px vertikales Padding, enger Spacing.
+ * -------------------------------------------------------- */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-item:hover {
+  opacity: 0.7;
+}
+
+.task-item__priority {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+}
+
+.task-item__priority--urgent { background-color: var(--color-priority-urgent); }
+.task-item__priority--high   { background-color: var(--color-priority-high); }
+.task-item__priority--medium { background-color: var(--color-priority-medium); }
+.task-item__priority--low    { background-color: var(--color-priority-low); }
+
+.task-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-item__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--line-height-snug);
+}
+
+.task-item__meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: 1px;
+}
+
+.task-item__meta--overdue {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+.task-item__avatar {
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-on-accent);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* --------------------------------------------------------
+ * Termine-Widget
+ * Kompakt: Farbbalken + Inhalt, enge Abstände.
+ * -------------------------------------------------------- */
+.event-item {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.event-item:last-child {
+  border-bottom: none;
+}
+
+.event-item:hover {
+  opacity: 0.7;
+}
+
+.event-item__bar {
+  width: 3px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  background-color: var(--color-accent);
+}
+
+.event-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-item__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--line-height-snug);
+}
+
+.event-item__time {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.event-time-badge {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-px) var(--space-1);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-3);
+  color: var(--color-text-secondary);
+}
+
+.event-time-badge--today {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+/* --------------------------------------------------------
+ * Essen-Widget (Slot-Grid)
+ * -------------------------------------------------------- */
+.widget--meals {
+  overflow: visible;
+}
+
+.meal-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-px);
+  background-color: var(--color-border);
+}
+
+.meal-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-1);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  text-align: center;
+  min-height: 72px;
+}
+
+.meal-slot:hover {
+  background-color: var(--color-surface-2);
+}
+
+.meal-slot:first-child {
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.meal-slot:last-child {
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.meal-slot__icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-disabled);
+  flex-shrink: 0;
+}
+
+.meal-slot--filled .meal-slot__icon {
+  color: var(--color-accent);
+}
+
+.meal-slot__type {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.meal-slot--filled .meal-slot__type {
+  color: var(--color-text-secondary);
+}
+
+.meal-slot__title {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  padding: 0 var(--space-1);
+}
+
+.meal-slot--filled .meal-slot__title {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Desktop: 2x2 Grid statt 4x1 für mehr Breite pro Slot */
+@media (min-width: 1024px) {
+  .meal-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .meal-slot:first-child {
+    border-bottom-left-radius: 0;
+  }
+
+  .meal-slot:last-child {
+    border-bottom-right-radius: 0;
+  }
+
+  .meal-slot:nth-child(3) {
+    border-bottom-left-radius: var(--radius-md);
+  }
+
+  .meal-slot:nth-child(4) {
+    border-bottom-right-radius: var(--radius-md);
+  }
+}
+
+/* --------------------------------------------------------
+ * Shopping-Widget
+ * -------------------------------------------------------- */
+.shopping-widget-list {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) 0;
+}
+
+.shopping-widget-list:hover {
+  background-color: var(--color-surface-2);
+}
+
+.shopping-widget-list + .shopping-widget-list {
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.shopping-widget-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
+.shopping-widget-list__name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.shopping-widget-list__count {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.shopping-widget-list__progress {
+  height: 4px;
+  background-color: var(--color-surface-3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.shopping-widget-list__bar {
+  height: 100%;
+  background-color: var(--color-success);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+.shopping-widget-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.shopping-widget-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.shopping-widget-item__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-text-disabled);
+  flex-shrink: 0;
+}
+
+.shopping-widget-item__name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shopping-widget-item__qty {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+.shopping-widget-item--more {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* --------------------------------------------------------
+ * Notizen-Grid-Widget
+ * -------------------------------------------------------- */
+.notes-grid-widget {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .notes-grid-widget {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.note-item {
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  border-left: 3px solid var(--note-color, var(--color-accent));
+  background-color: var(--color-surface-2);
+}
+
+.note-item:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.note-item__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-item__content {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------
+ * Wetter-Widget
+ *
+ * Eigener Gradient, überschreibt .widget Hintergrund.
+ * Mobile: kompakt, 3-Tage-Vorhersage.
+ * Desktop: volle Breite über allen Widgets, horizontales
+ *          Layout mit bis zu 5-Tage-Vorhersage.
+ * -------------------------------------------------------- */
+.weather-widget {
+  position: relative;
+  background: linear-gradient(135deg, var(--color-accent) 0%, #1E5CB3 100%);
+  color: var(--color-text-on-accent);
+}
+
+.weather-widget__refresh {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--color-glass);
+  color: var(--color-text-on-accent);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  z-index: 1;
+  transition: background var(--transition-fast);
+}
+
+.weather-widget__refresh:hover {
+  background: var(--color-glass-hover);
+}
+
+.weather-widget__refresh:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.weather-widget__refresh--spinning i {
+  animation: spin 0.7s linear infinite;
+}
+
+.weather-widget__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+}
+
+.weather-widget__temp {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.weather-widget__desc {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+  margin-bottom: 1px;
+}
+
+.weather-widget__city {
+  font-size: var(--text-xs);
+  opacity: 0.85;
+  margin-bottom: var(--space-1);
+}
+
+.weather-widget__meta {
+  font-size: var(--text-xs);
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+.weather-widget__icon {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.weather-forecast {
+  display: flex;
+  border-top: 1px solid var(--color-glass-border);
+  padding: var(--space-2) var(--space-4);
+  gap: var(--space-3);
+}
+
+.weather-forecast__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+/* Tage 4+5 nur auf breiteren Bildschirmen sichtbar */
+.weather-forecast__day--extended {
+  display: none;
+}
+
+.weather-forecast__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  opacity: 0.85;
+  text-transform: capitalize;
+}
+
+.weather-forecast__icon {
+  width: 28px;
+  height: 28px;
+}
+
+.weather-forecast__temps {
+  display: flex;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+}
+
+.weather-forecast__high {
+  font-weight: var(--font-weight-semibold);
+}
+
+.weather-forecast__low {
+  opacity: 0.6;
+}
+
+/* Tablet: Wetter über volle Breite, 4 Tage */
+@media (min-width: 768px) {
+  .weather-widget {
+    grid-column: 1 / -1;
+  }
+
+  .weather-widget__inner {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .weather-widget__main {
+    flex-shrink: 0;
+  }
+
+  .weather-forecast {
+    border-top: none;
+    border-left: 1px solid var(--color-glass-border);
+    flex: 1;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .weather-forecast__day--extended:nth-child(-n+4) {
+    display: flex;
+  }
+}
+
+/* Desktop: 5-Tage-Vorhersage, größere Elemente */
+@media (min-width: 1024px) {
+  .weather-widget {
+    grid-column: 1 / -1;
+  }
+
+  .weather-widget__main {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .weather-widget__temp {
+    font-size: var(--text-4xl);
+  }
+
+  .weather-widget__icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .weather-forecast {
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-5);
+  }
+
+  .weather-forecast__day--extended {
+    display: flex;
+  }
+
+  .weather-forecast__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .weather-forecast__temps {
+    font-size: var(--text-sm);
+  }
+
+  .weather-forecast__label {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Wide Desktop: noch mehr Platz */
+@media (min-width: 1440px) {
+  .weather-widget {
+    grid-column: 1 / -1;
+  }
+
+  .weather-widget__main {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .weather-forecast {
+    gap: var(--space-5);
+    padding: var(--space-3) var(--space-6);
+  }
+
+  .weather-forecast__icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* --------------------------------------------------------
+ * Skeleton-Zustände (pro Widget)
+ * Kompakt: gleiches Spacing wie echte Widgets.
+ * -------------------------------------------------------- */
+.widget-skeleton {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.skeleton-line {
+  height: 12px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-xs);
+}
+
+.skeleton-line--short  { width: 35%; }
+.skeleton-line--medium { width: 60%; }
+.skeleton-line--full   { width: 100%; }
+
+/* --------------------------------------------------------
+ * FAB Speed-Dial
+ * -------------------------------------------------------- */
+.fab-container {
+  position: fixed;
+  bottom: calc(var(--nav-bottom-height) + 24px + var(--safe-area-inset-bottom));
+  right: var(--space-4);
+  z-index: calc(var(--z-nav) - 1);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+@media (min-width: 1024px) {
+  .fab-container {
+    bottom: var(--space-8);
+  }
+}
+
+.fab-main {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background-color: var(--module-accent, var(--color-accent));
+  color: var(--color-text-on-accent);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--transition-base),
+    background-color var(--transition-fast);
+  border: none;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .fab-main {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.fab-main:hover {
+  background-color: color-mix(in srgb, var(--module-accent, var(--color-accent)) 85%, black);
+}
+
+.fab-main:active {
+  transform: scale(0.95);
+}
+
+.fab-main--open {
+  transform: rotate(45deg);
+  background-color: var(--neutral-600);
+}
+
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: calc(var(--z-nav) - 10);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+}
+
+.fab-backdrop--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fab-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+.fab-actions--visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.fab-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.fab-action__label {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+}
+
+.fab-action__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast);
+}
+
+.fab-action__btn:hover {
+  background-color: var(--color-accent-light);
+}
