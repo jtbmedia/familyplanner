@@ -129,5 +129,16 @@ test('attendees query voor push', () => {
   assert(attendees.some(r => r.user_id === uid2), 'uid2 missing');
 });
 
+test('cascade delete: push log verwijderd bij user delete', () => {
+  const uid4 = db.prepare(`INSERT INTO users (username, display_name, password_hash)
+    VALUES ('temp_push', 'TempPush', 'x')`).run().lastInsertRowid;
+  const ev4 = db.prepare(`INSERT INTO calendar_events
+    (title, start_datetime, color, created_by) VALUES ('TempLogUser', '2026-04-13', '#0000FF', ?)`).run(uid1).lastInsertRowid;
+  db.prepare(`INSERT INTO event_push_log (event_id, user_id, provider, external_event_id) VALUES (?, ?, 'google', 'ext-user-cascade')`).run(ev4, uid4);
+  db.prepare(`DELETE FROM users WHERE id = ?`).run(uid4);
+  const rows = db.prepare(`SELECT * FROM event_push_log WHERE user_id = ?`).all(uid4);
+  assert(rows.length === 0, 'Push log should be cascade deleted on user delete');
+});
+
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

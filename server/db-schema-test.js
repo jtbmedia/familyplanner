@@ -196,6 +196,8 @@ const MIGRATIONS_SQL = {
       caldav_username TEXT,
       caldav_password TEXT,
       needs_reconnect INTEGER NOT NULL DEFAULT 0,
+      connected_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+      updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
       PRIMARY KEY (user_id, provider)
     );
     CREATE TABLE IF NOT EXISTS event_push_log (
@@ -203,12 +205,18 @@ const MIGRATIONS_SQL = {
       user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       provider          TEXT    NOT NULL CHECK(provider IN ('google', 'apple', 'microsoft')),
       external_event_id TEXT    NOT NULL,
+      pushed_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
       PRIMARY KEY (event_id, user_id, provider)
     );
     CREATE INDEX IF NOT EXISTS idx_event_attendees_event ON event_attendees(event_id);
     CREATE INDEX IF NOT EXISTS idx_event_attendees_user  ON event_attendees(user_id);
     CREATE INDEX IF NOT EXISTS idx_push_log_event        ON event_push_log(event_id);
     CREATE INDEX IF NOT EXISTS idx_push_log_user         ON event_push_log(user_id);
+    CREATE TRIGGER IF NOT EXISTS trg_user_calendar_tokens_updated_at
+      AFTER UPDATE ON user_calendar_tokens FOR EACH ROW
+      BEGIN UPDATE user_calendar_tokens
+            SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+            WHERE user_id = OLD.user_id AND provider = OLD.provider; END;
   `,
 };
 
