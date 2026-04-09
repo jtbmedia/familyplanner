@@ -67,14 +67,14 @@ app.use(helmet({
 
 // Trust Proxy: nur aktivieren wenn ein Reverse Proxy vorgeschaltet ist (TRUST_PROXY env var).
 // Default 'loopback' akzeptiert nur X-Forwarded-For von localhost - verhindert IP-Spoofing.
-// Numeric strings (e.g. '1') are parsed as hop count; 'true'/'false' as booleans.
-const _rawProxy = process.env.TRUST_PROXY;
-const _trustProxy = !_rawProxy        ? 'loopback'
-  : _rawProxy === 'true'              ? true
-  : _rawProxy === 'false'             ? false
-  : !isNaN(Number(_rawProxy))         ? Number(_rawProxy)
-  : _rawProxy;
-app.set('trust proxy', _trustProxy);
+// Numeric strings (e.g. '1') are parsed as hop count. Boolean 'true' is intentionally
+// not supported — it would trust all proxies unconditionally and allow IP spoofing.
+const rawProxy = process.env.TRUST_PROXY;
+const trustProxySetting = !rawProxy             ? 'loopback'
+  : rawProxy === 'false'                        ? false
+  : !isNaN(Number(rawProxy)) && rawProxy !== '' ? Number(rawProxy)
+  : rawProxy;
+app.set('trust proxy', trustProxySetting);
 
 // --------------------------------------------------------
 // Request-Parsing
