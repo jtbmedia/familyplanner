@@ -178,6 +178,38 @@ const MIGRATIONS_SQL = {
     );
     CREATE INDEX IF NOT EXISTS idx_calendar_external_id ON calendar_events(external_calendar_id);
   `,
+  7: `
+    CREATE TABLE IF NOT EXISTS event_attendees (
+      event_id INTEGER NOT NULL REFERENCES calendar_events(id) ON DELETE CASCADE,
+      user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (event_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS user_calendar_tokens (
+      user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider        TEXT    NOT NULL CHECK(provider IN ('google', 'apple', 'microsoft')),
+      access_token    TEXT,
+      refresh_token   TEXT,
+      token_expiry    TEXT,
+      calendar_id     TEXT,
+      calendar_name   TEXT,
+      caldav_url      TEXT,
+      caldav_username TEXT,
+      caldav_password TEXT,
+      needs_reconnect INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, provider)
+    );
+    CREATE TABLE IF NOT EXISTS event_push_log (
+      event_id          INTEGER NOT NULL REFERENCES calendar_events(id) ON DELETE CASCADE,
+      user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider          TEXT    NOT NULL CHECK(provider IN ('google', 'apple', 'microsoft')),
+      external_event_id TEXT    NOT NULL,
+      PRIMARY KEY (event_id, user_id, provider)
+    );
+    CREATE INDEX IF NOT EXISTS idx_event_attendees_event ON event_attendees(event_id);
+    CREATE INDEX IF NOT EXISTS idx_event_attendees_user  ON event_attendees(user_id);
+    CREATE INDEX IF NOT EXISTS idx_push_log_event        ON event_push_log(event_id);
+    CREATE INDEX IF NOT EXISTS idx_push_log_user         ON event_push_log(user_id);
+  `,
 };
 
 export { MIGRATIONS_SQL };
