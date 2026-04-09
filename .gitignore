@@ -37,8 +37,9 @@ data/
 # Git worktrees
 .worktrees/
 
-# Claude Code work documents (internal plans/specs, not for contributors)
-docs/superpowers/
+# Claude Code work documents (internal plans, not for contributors)
+docs/superpowers/plans/
+docs/superpowers/scratch/
 
 # Audit reports (generated per-session, not for version control)
 docs/audit-report-*.md
