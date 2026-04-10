@@ -801,7 +801,7 @@ function buildEventModalContent({ mode, event, date }) {
 
   const existingAttendees = isEdit && event.attendee_ids
     ? event.attendee_ids.split(',').map(Number)
-    : (isEdit && event.assigned_to ? [event.assigned_to] : []);
+    : (isEdit && event.assigned_to ? [Number(event.assigned_to)] : []);
 
   return `
     <div class="form-group">
@@ -972,7 +972,7 @@ async function saveEvent(overlay, mode, eventId) {
     window.oikos?.showToast(successMsg, 'success');
 
     // Push failure warning (shown after success toast)
-    if (res.push && !res.push.ok && Array.isArray(res.push.failed) && res.push.failed.length > 0) {
+    if (res.push?.ok === false && Array.isArray(res.push.failed) && res.push.failed.length > 0) {
       const failedNames = res.push.failed.map((f) => {
         const u = state.users.find(u => u.id === f.userId);
         return u ? u.display_name : `#${f.userId}`;
