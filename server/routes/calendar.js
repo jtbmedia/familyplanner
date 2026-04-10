@@ -13,6 +13,9 @@ import * as appleCalendar from '../services/apple-calendar.js';
 import { requireAdmin } from '../auth.js';
 import { str, color, datetime, rrule, collectErrors, MAX_TITLE, MAX_TEXT, DATE_RE, DATETIME_RE } from '../middleware/validate.js';
 import { nextOccurrence } from '../services/recurrence.js';
+import * as googlePersonal    from '../services/personal/google-personal.js';
+import * as microsoftPersonal from '../services/personal/microsoft-personal.js';
+import * as personalPush      from '../services/personal/push.js';
 
 const log = createLogger('Calendar');
 
@@ -369,6 +372,54 @@ router.delete('/apple/disconnect', requireAdmin, (req, res) => {
   }
 });
 
+/**
+ * GET /api/v1/calendar/google/personal/callback
+ * OAuth-callback voor persoonlijke Google Calendar verbinding.
+ */
+router.get('/google/personal/callback', async (req, res) => {
+  try {
+    const { code, error, state } = req.query;
+    if (error) return res.redirect('/settings?personal_sync_error=google');
+    if (!code)  return res.status(400).json({ error: 'Geen code ontvangen.', code: 400 });
+
+    if (!state || !req.session.googlePersonalOAuthState || state !== req.session.googlePersonalOAuthState) {
+      log.error('Google Personal OAuth state mismatch');
+      return res.redirect('/settings?personal_sync_error=google');
+    }
+    delete req.session.googlePersonalOAuthState;
+
+    await googlePersonal.handleCallback(code, req.session.userId);
+    res.redirect('/settings?personal_sync_ok=google&step=select_calendar');
+  } catch (err) {
+    log.error('', err);
+    res.redirect('/settings?personal_sync_error=google');
+  }
+});
+
+/**
+ * GET /api/v1/calendar/microsoft/callback
+ * OAuth-callback voor persoonlijke Microsoft 365 Calendar verbinding.
+ */
+router.get('/microsoft/callback', async (req, res) => {
+  try {
+    const { code, error, state } = req.query;
+    if (error) return res.redirect('/settings?personal_sync_error=microsoft');
+    if (!code)  return res.status(400).json({ error: 'Geen code ontvangen.', code: 400 });
+
+    if (!state || !req.session.microsoftOAuthState || state !== req.session.microsoftOAuthState) {
+      log.error('Microsoft OAuth state mismatch');
+      return res.redirect('/settings?personal_sync_error=microsoft');
+    }
+    delete req.session.microsoftOAuthState;
+
+    await microsoftPersonal.handleCallback(code, req.session.userId);
+    res.redirect('/settings?personal_sync_ok=microsoft&step=select_calendar');
+  } catch (err) {
+    log.error('', err);
+    res.redirect('/settings?personal_sync_error=microsoft');
+  }
+});
+
 // --------------------------------------------------------
 // GET /api/v1/calendar/:id
 // Einzelnen Termin abrufen.
@@ -447,6 +498,24 @@ router.post('/', (req, res) => {
       WHERE e.id = ?
     `).get(result.lastInsertRowid);
 
+    // Attendees opslaan en push starten
+    const rawAttendees = Array.isArray(req.body.attendees) ? req.body.attendees : [];
+    const attendeeIds = rawAttendees.filter(id => Number.isInteger(id) && id > 0);
+
+    // Terugval: assigned_to als attendee als geen attendees lijst
+    if (attendeeIds.length === 0 && assigned_to) attendeeIds.push(assigned_to);
+
+    if (attendeeIds.length > 0) {
+      const insertAttendee = db.get().prepare(
+        `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
+      );
+      for (const uid of attendeeIds) insertAttendee.run(result.lastInsertRowid, uid);
+
+      personalPush.push(event, attendeeIds, 'create').then((pushResult) => {
+        if (!pushResult.ok) log.warn('Push gedeeltelijk mislukt (create):', JSON.stringify(pushResult.failed));
+      }).catch((e) => log.error('Push fout (create):', e.message));
+    }
+
     res.status(201).json({ data: event });
   } catch (err) {
     log.error('', err);
@@ -518,6 +587,28 @@ router.put('/:id', (req, res) => {
       WHERE e.id = ?
     `).get(id);
 
+    // Attendees bijwerken indien meegestuurd
+    let attendeeIds;
+    if (Array.isArray(req.body.attendees)) {
+      const validIds = req.body.attendees.filter(id => Number.isInteger(id) && id > 0);
+      db.get().prepare(`DELETE FROM event_attendees WHERE event_id = ?`).run(id);
+      const insertAttendee = db.get().prepare(
+        `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
+      );
+      for (const uid of validIds) insertAttendee.run(id, uid);
+      attendeeIds = validIds;
+    } else {
+      attendeeIds = db.get().prepare(
+        `SELECT user_id FROM event_attendees WHERE event_id = ?`
+      ).all(id).map(r => r.user_id);
+    }
+
+    if (attendeeIds.length > 0) {
+      personalPush.push(updated, attendeeIds, 'update').then((pushResult) => {
+        if (!pushResult.ok) log.warn('Push gedeeltelijk mislukt (update):', JSON.stringify(pushResult.failed));
+      }).catch((e) => log.error('Push fout (update):', e.message));
+    }
+
     res.json({ data: updated });
   } catch (err) {
     log.error('', err);
@@ -530,12 +621,26 @@ router.put('/:id', (req, res) => {
 // Termin löschen.
 // Response: 204 No Content
 // --------------------------------------------------------
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const id     = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id, 10);
+
+    const event = db.get().prepare('SELECT * FROM calendar_events WHERE id = ?').get(id);
+    if (!event) return res.status(404).json({ error: 'Termin nicht gefunden', code: 404 });
+
+    const attendeeIds = db.get().prepare(
+      `SELECT user_id FROM event_attendees WHERE event_id = ?`
+    ).all(id).map(r => r.user_id);
+
+    // Push delete eerst (CASCADE verwijdert push_log en attendees daarna)
+    if (attendeeIds.length > 0) {
+      await personalPush.push(event, attendeeIds, 'delete').catch(
+        (e) => log.error('Push delete fout (genegeerd):', e.message)
+      );
+    }
+
     const result = db.get().prepare('DELETE FROM calendar_events WHERE id = ?').run(id);
-    if (result.changes === 0)
-      return res.status(404).json({ error: 'Termin nicht gefunden', code: 404 });
+    if (result.changes === 0) return res.status(404).json({ error: 'Termin nicht gefunden', code: 404 });
     res.status(204).end();
   } catch (err) {
     log.error('', err);
