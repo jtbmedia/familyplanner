@@ -40,9 +40,9 @@ function buildVCalendar(event, uid) {
     d.setDate(d.getDate() + 1);
     lines.push(`DTEND;VALUE=DATE:${d.toISOString().slice(0, 10).replace(/-/g, '')}`);
   } else {
-    const startUtc = event.start_datetime.endsWith('Z') ? event.start_datetime : event.start_datetime + 'Z';
+    const startUtc = event.start_datetime.endsWith('Z') ? event.start_datetime : event.start_datetime + ':00Z';
     const endUtc   = event.end_datetime
-      ? (event.end_datetime.endsWith('Z') ? event.end_datetime : event.end_datetime + 'Z')
+      ? (event.end_datetime.endsWith('Z') ? event.end_datetime : event.end_datetime + ':00Z')
       : startUtc;
     lines.push(`DTSTART:${toICalDateTime(startUtc)}`);
     lines.push(`DTEND:${toICalDateTime(endUtc)}`);
@@ -50,7 +50,6 @@ function buildVCalendar(event, uid) {
 
   if (event.description) lines.push(`DESCRIPTION:${event.description.replace(/\n/g, '\\n')}`);
   if (event.location)    lines.push(`LOCATION:${event.location.replace(/\n/g, '\\n')}`);
-  if (event.color)       lines.push(`COLOR:${event.color.toLowerCase()}`);
 
   lines.push('END:VEVENT', 'END:VCALENDAR');
   return lines.join('\r\n');
@@ -76,13 +75,17 @@ export async function push(event, userId, action) {
   });
 
   const calendarUrl = row.calendar_id;
+  if (!calendarUrl) {
+    throw new Error('[ApplePersonal] Geen kalender geselecteerd voor gebruiker ' + userId + '. Selecteer eerst een kalender in Instellingen.');
+  }
 
   if (action === 'delete') {
     const logRow = db.get().prepare(
       `SELECT external_event_id FROM event_push_log WHERE event_id = ? AND user_id = ? AND provider = 'apple'`
     ).get(event.id, userId);
     if (!logRow) return;
-    const eventUrl = `${calendarUrl}${logRow.external_event_id}.ics`;
+    const base = calendarUrl.endsWith('/') ? calendarUrl : calendarUrl + '/';
+    const eventUrl = `${base}${logRow.external_event_id}.ics`;
     await client.deleteCalendarObject({
       calendarObject: { url: eventUrl, etag: '' },
     }).catch((err) => log.warn(`Apple delete genegeerd: ${err.message}`));
@@ -98,7 +101,8 @@ export async function push(event, userId, action) {
 
   const uid      = logRow ? logRow.external_event_id : crypto.randomUUID();
   const icalData = buildVCalendar(event, uid);
-  const eventUrl = `${calendarUrl}${uid}.ics`;
+  const base = calendarUrl.endsWith('/') ? calendarUrl : calendarUrl + '/';
+  const eventUrl = `${base}${uid}.ics`;
 
   if (action === 'update' && logRow) {
     await client.updateCalendarObject({
