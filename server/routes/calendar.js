@@ -126,7 +126,10 @@ router.get('/', (req, res) => {
       SELECT e.*,
              u_assigned.display_name AS assigned_name,
              u_assigned.avatar_color AS assigned_color,
-             u_created.display_name  AS creator_name
+             u_created.display_name  AS creator_name,
+             (SELECT GROUP_CONCAT(ea.user_id)
+              FROM event_attendees ea
+              WHERE ea.event_id = e.id) AS attendee_ids
       FROM calendar_events e
       LEFT JOIN users u_assigned ON u_assigned.id = e.assigned_to
       LEFT JOIN users u_created  ON u_created.id  = e.created_by
@@ -455,7 +458,7 @@ router.get('/:id', (req, res) => {
 //         recurrence_rule? }
 // Response: { data: Event }
 // --------------------------------------------------------
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const vTitle = str(req.body.title, 'Titel', { max: MAX_TITLE });
     const vDesc  = str(req.body.description, 'Beschreibung', { max: MAX_TEXT, required: false });
@@ -505,18 +508,22 @@ router.post('/', (req, res) => {
     // Terugval: assigned_to als attendee als geen attendees lijst
     if (attendeeIds.length === 0 && assigned_to) attendeeIds.push(assigned_to);
 
+    let pushResult = { ok: true };
     if (attendeeIds.length > 0) {
       const insertAttendee = db.get().prepare(
         `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
       );
       for (const uid of attendeeIds) insertAttendee.run(result.lastInsertRowid, uid);
 
-      personalPush.push(event, attendeeIds, 'create').then((pushResult) => {
+      try {
+        pushResult = await personalPush.push(event, attendeeIds, 'create');
         if (!pushResult.ok) log.warn('Push gedeeltelijk mislukt (create):', JSON.stringify(pushResult.failed));
-      }).catch((e) => log.error('Push fout (create):', e.message));
+      } catch (e) {
+        log.error('Push fout (create):', e.message);
+      }
     }
 
-    res.status(201).json({ data: event });
+    res.status(201).json({ data: event, push: pushResult });
   } catch (err) {
     log.error('', err);
     res.status(500).json({ error: 'Interner Fehler', code: 500 });
@@ -529,7 +536,7 @@ router.post('/', (req, res) => {
 // Body: alle Felder optional außer title + start_datetime
 // Response: { data: Event }
 // --------------------------------------------------------
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const id    = parseInt(req.params.id, 10);
     const event = db.get().prepare('SELECT * FROM calendar_events WHERE id = ?').get(id);
@@ -603,13 +610,17 @@ router.put('/:id', (req, res) => {
       ).all(id).map(r => r.user_id);
     }
 
+    let pushResult = { ok: true };
     if (attendeeIds.length > 0) {
-      personalPush.push(updated, attendeeIds, 'update').then((pushResult) => {
+      try {
+        pushResult = await personalPush.push(updated, attendeeIds, 'update');
         if (!pushResult.ok) log.warn('Push gedeeltelijk mislukt (update):', JSON.stringify(pushResult.failed));
-      }).catch((e) => log.error('Push fout (update):', e.message));
+      } catch (e) {
+        log.error('Push fout (update):', e.message);
+      }
     }
 
-    res.json({ data: updated });
+    res.json({ data: updated, push: pushResult });
   } catch (err) {
     log.error('', err);
     res.status(500).json({ error: 'Interner Fehler', code: 500 });
