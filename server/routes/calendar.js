@@ -470,7 +470,11 @@ router.post('/', async (req, res) => {
     const errors = collectErrors([vTitle, vDesc, vStart, vEnd, vColor, vLoc, vRrule]);
     if (errors.length) return res.status(400).json({ error: errors.join(' '), code: 400 });
 
-    const { all_day = 0, assigned_to = null } = req.body;
+    const { all_day = 0 } = req.body;
+    const assigned_to = req.body.assigned_to != null ? parseInt(req.body.assigned_to, 10) : null;
+    if (assigned_to !== null && (!Number.isInteger(assigned_to) || assigned_to <= 0)) {
+      return res.status(400).json({ error: 'assigned_to: ongeldig gebruikers-ID', code: 400 });
+    }
 
     if (assigned_to) {
       const user = db.get().prepare('SELECT id FROM users WHERE id = ?').get(assigned_to);
@@ -503,10 +507,12 @@ router.post('/', async (req, res) => {
 
     // Attendees opslaan en push starten
     const rawAttendees = Array.isArray(req.body.attendees) ? req.body.attendees : [];
-    const attendeeIds = rawAttendees.filter(id => Number.isInteger(id) && id > 0);
+    const attendeeIds = rawAttendees.filter(uid => Number.isInteger(uid) && uid > 0);
 
     // Terugval: assigned_to als attendee als geen attendees lijst
-    if (attendeeIds.length === 0 && assigned_to) attendeeIds.push(assigned_to);
+    if (attendeeIds.length === 0 && Number.isInteger(assigned_to) && assigned_to > 0) {
+      attendeeIds.push(assigned_to);
+    }
 
     let pushResult = { ok: true };
     if (attendeeIds.length > 0) {
@@ -555,8 +561,14 @@ router.put('/:id', async (req, res) => {
 
     const {
       title, description, start_datetime, end_datetime,
-      all_day, location, color: colorVal, assigned_to, recurrence_rule,
+      all_day, location, color: colorVal, recurrence_rule,
     } = req.body;
+    const assigned_to = req.body.assigned_to !== undefined
+      ? (req.body.assigned_to != null ? parseInt(req.body.assigned_to, 10) : null)
+      : undefined;
+    if (assigned_to !== undefined && assigned_to !== null && (!Number.isInteger(assigned_to) || assigned_to <= 0)) {
+      return res.status(400).json({ error: 'assigned_to: ongeldig gebruikers-ID', code: 400 });
+    }
 
     db.get().prepare(`
       UPDATE calendar_events
@@ -578,7 +590,7 @@ router.put('/:id', async (req, res) => {
       all_day !== undefined ? (all_day ? 1 : 0) : null,
       location !== undefined ? (location || null) : event.location,
       colorVal ?? null,
-      assigned_to !== undefined ? (assigned_to || null) : event.assigned_to,
+      assigned_to !== undefined ? (assigned_to ?? null) : event.assigned_to,
       recurrence_rule !== undefined ? (recurrence_rule || null) : event.recurrence_rule,
       id
     );
@@ -598,11 +610,13 @@ router.put('/:id', async (req, res) => {
     let attendeeIds;
     if (Array.isArray(req.body.attendees)) {
       const validIds = req.body.attendees.filter(uid => Number.isInteger(uid) && uid > 0);
-      db.get().prepare(`DELETE FROM event_attendees WHERE event_id = ?`).run(id);
-      const insertAttendee = db.get().prepare(
-        `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
-      );
-      for (const uid of validIds) insertAttendee.run(id, uid);
+      db.get().transaction(() => {
+        db.get().prepare(`DELETE FROM event_attendees WHERE event_id = ?`).run(id);
+        const insertAttendee = db.get().prepare(
+          `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
+        );
+        for (const uid of validIds) insertAttendee.run(id, uid);
+      })();
       attendeeIds = validIds;
     } else {
       attendeeIds = db.get().prepare(
