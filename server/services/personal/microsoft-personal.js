@@ -50,9 +50,12 @@ async function refreshTokens(userId, refreshToken) {
   const expiry = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
   db.get().prepare(`
     UPDATE user_calendar_tokens
-    SET access_token = ?, token_expiry = ?, needs_reconnect = 0
+    SET access_token  = ?,
+        refresh_token = COALESCE(?, refresh_token),
+        token_expiry  = ?,
+        needs_reconnect = 0
     WHERE user_id = ? AND provider = 'microsoft'
-  `).run(data.access_token, expiry, userId);
+  `).run(data.access_token, data.refresh_token || null, expiry, userId);
 
   return data.access_token;
 }
