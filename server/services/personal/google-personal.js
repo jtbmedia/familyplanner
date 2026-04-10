@@ -11,8 +11,8 @@
 
 import { google } from 'googleapis';
 import crypto from 'node:crypto';
-import { createLogger } from '../logger.js';
-import * as db from '../db.js';
+import { createLogger } from '../../logger.js';
+import * as db from '../../db.js';
 
 const log = createLogger('GooglePersonal');
 
@@ -63,11 +63,18 @@ function createOAuth2Client() {
 
 // ── Token laden + vernieuwen indien nodig ───────────────────────────────────
 
-export async function getAuthorizedClient(userId) {
+async function getAuthorizedClient(userId) {
   const row = db.get().prepare(
     `SELECT * FROM user_calendar_tokens WHERE user_id = ? AND provider = 'google'`
   ).get(userId);
   if (!row) throw new Error('[GooglePersonal] Geen Google-verbinding voor gebruiker ' + userId);
+
+  if (!row.refresh_token) {
+    db.get().prepare(
+      `UPDATE user_calendar_tokens SET needs_reconnect = 1 WHERE user_id = ? AND provider = 'google'`
+    ).run(userId);
+    throw new Error('[GooglePersonal] Geen refresh token — opnieuw verbinden vereist voor gebruiker ' + userId);
+  }
 
   const client = createOAuth2Client();
   client.setCredentials({
@@ -122,7 +129,9 @@ export async function push(event, userId, action) {
       `SELECT external_event_id FROM event_push_log WHERE event_id = ? AND user_id = ? AND provider = 'google'`
     ).get(event.id, userId);
     if (!logRow) return; // Nooit gepusht
-    await cal.events.delete({ calendarId, eventId: logRow.external_event_id }).catch(() => {});
+    await cal.events.delete({ calendarId, eventId: logRow.external_event_id }).catch(
+      (err) => log.warn(`Google delete genegeerd (event ${logRow.external_event_id}): ${err.message}`)
+    );
     db.get().prepare(
       `DELETE FROM event_push_log WHERE event_id = ? AND user_id = ? AND provider = 'google'`
     ).run(event.id, userId);
@@ -153,7 +162,7 @@ export async function push(event, userId, action) {
     body.start = { date: startDate };
     body.end   = { date: endDate };
   } else {
-    const toUtc = (dt) => dt.endsWith('Z') ? dt : dt + ':00Z';
+    const toUtc = (dt) => dt.endsWith('Z') ? dt : dt + 'Z';
     body.start = { dateTime: toUtc(event.start_datetime) };
     body.end   = { dateTime: event.end_datetime ? toUtc(event.end_datetime) : toUtc(event.start_datetime) };
   }
@@ -194,7 +203,7 @@ export async function push(event, userId, action) {
  */
 export function getAuthUrl(session) {
   const client = createOAuth2Client();
-  const state = crypto.randomBytes(16).toString('hex');
+  const state = crypto.randomBytes(32).toString('hex');
   session.googlePersonalOAuthState = state;
   return client.generateAuthUrl({
     access_type: 'offline',
