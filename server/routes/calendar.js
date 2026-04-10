@@ -435,7 +435,10 @@ router.get('/:id', (req, res) => {
       SELECT e.*,
              u_assigned.display_name AS assigned_name,
              u_assigned.avatar_color AS assigned_color,
-             u_created.display_name  AS creator_name
+             u_created.display_name  AS creator_name,
+             (SELECT GROUP_CONCAT(ea.user_id)
+              FROM event_attendees ea
+              WHERE ea.event_id = e.id) AS attendee_ids
       FROM calendar_events e
       LEFT JOIN users u_assigned ON u_assigned.id = e.assigned_to
       LEFT JOIN users u_created  ON u_created.id  = e.created_by

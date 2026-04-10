@@ -603,7 +603,7 @@ function bindPersonalCalendarEvents(container) {
           }
         });
 
-        window.oikos?.showToast(t('settings.personalAppleConnectedToast'), 'success');
+        // Geen toast hier — de toast verschijnt nadat de gebruiker een agenda heeft geselecteerd
       } catch (err) {
         showError(errDiv, err.data?.error ?? t('common.errorGeneric'));
         submitBtn.disabled   = false;
