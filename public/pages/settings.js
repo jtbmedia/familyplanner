@@ -594,15 +594,18 @@ function bindPersonalCalendarEvents(container) {
           if (!sel.value) return;
           const calId   = sel.value;
           const calName = sel.options[sel.selectedIndex]?.text || calId;
-          await api.post('/calendar/personal/select-calendar', { provider: 'apple', calendarId: calId, calendarName: calName });
-          window.oikos?.showToast(t('settings.personalAppleConnectedToast'), 'success');
-          window.oikos?.navigate('/settings');
+          try {
+            await api.post('/calendar/personal/select-calendar', { provider: 'apple', calendarId: calId, calendarName: calName });
+            window.oikos?.showToast(t('settings.personalAppleConnectedToast'), 'success');
+            window.oikos?.navigate('/settings');
+          } catch (err) {
+            showError(errDiv, err.data?.error ?? t('common.errorGeneric'));
+          }
         });
 
         window.oikos?.showToast(t('settings.personalAppleConnectedToast'), 'success');
       } catch (err) {
-        errDiv.textContent = err.data?.error ?? t('common.errorGeneric');
-        errDiv.hidden = false;
+        showError(errDiv, err.data?.error ?? t('common.errorGeneric'));
         submitBtn.disabled   = false;
         submitBtn.textContent = t('settings.personalAppleConnectBtn');
       }
