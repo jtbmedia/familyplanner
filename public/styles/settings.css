@@ -477,3 +477,32 @@
 .cat-add-form .form-input {
   flex: 1;
 }
+
+/* --------------------------------------------------------
+   Persoonlijke Agenda — provider-cards en kalenderselector
+   -------------------------------------------------------- */
+
+.settings-sync-info__status--warning {
+  color: var(--color-warning, #FF9500);
+}
+
+.settings-personal-cal-select {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-personal-cal-select label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+/* Microsoft logo placeholder */
+.settings-sync-logo--microsoft {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
