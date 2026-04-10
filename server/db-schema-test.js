@@ -25,8 +25,8 @@ const MIGRATIONS_SQL = {
       title           TEXT    NOT NULL,
       description     TEXT,
       category        TEXT    NOT NULL DEFAULT 'Sonstiges',
-      priority        TEXT    NOT NULL DEFAULT 'medium'
-                              CHECK(priority IN ('low', 'medium', 'high', 'urgent')),
+      priority        TEXT    NOT NULL DEFAULT 'none'
+                              CHECK(priority IN ('none', 'low', 'medium', 'high', 'urgent')),
       status          TEXT    NOT NULL DEFAULT 'open'
                               CHECK(status IN ('open', 'in_progress', 'done')),
       due_date        TEXT,

@@ -90,10 +90,14 @@ async function getAuthorizedClient(userId) {
       const { credentials } = await client.refreshAccessToken();
       db.get().prepare(`
         UPDATE user_calendar_tokens
-        SET access_token = ?, token_expiry = ?, needs_reconnect = 0
+        SET access_token  = ?,
+            refresh_token = COALESCE(?, refresh_token),
+            token_expiry  = ?,
+            needs_reconnect = 0
         WHERE user_id = ? AND provider = 'google'
       `).run(
         credentials.access_token,
+        credentials.refresh_token || null,
         credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : null,
         userId
       );

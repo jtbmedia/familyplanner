@@ -42,8 +42,13 @@ async function refreshTokens(userId, refreshToken) {
     body:    body.toString(),
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error('[MicrosoftPersonal] Token-vernieuwen mislukt: ' + text);
+    // Alleen de foutcode loggen, niet de volledige body (kan client-details bevatten)
+    let errorCode = res.status;
+    try {
+      const body = await res.json();
+      errorCode = body.error || res.status;
+    } catch { /* ignore parse failure */ }
+    throw new Error(`[MicrosoftPersonal] Token-vernieuwen mislukt: ${errorCode}`);
   }
   const data = await res.json();
 

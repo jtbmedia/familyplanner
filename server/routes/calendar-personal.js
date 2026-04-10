@@ -133,7 +133,9 @@ router.post('/connect/apple', async (req, res) => {
     res.json({ data: calendars });
   } catch (err) {
     log.error('', err);
-    res.status(400).json({ error: err.message.replace('[ApplePersonal] ', ''), code: 400 });
+    // Saniteer de foutmelding: verwijder prefix en zorg dat het wachtwoord nooit in de response landt
+    const safeMsg = err.message.replace('[ApplePersonal] ', '').replace(password, '***');
+    res.status(400).json({ error: safeMsg, code: 400 });
   }
 });
 

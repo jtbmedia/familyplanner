@@ -35,7 +35,7 @@ export async function push(event, userIds, action) {
   for (const userId of userIds) {
     // Haal alle verbonden providers op voor deze gebruiker
     // Alleen actieve (needs_reconnect = 0) met een geselecteerde kalender
-    // Apple-uitzondering: calendar_id mag null zijn als credentials aanwezig zijn
+    // Apple vereist ook caldav_url, caldav_username en caldav_password
     const tokens = db.get().prepare(`
       SELECT provider FROM user_calendar_tokens
       WHERE user_id = ?

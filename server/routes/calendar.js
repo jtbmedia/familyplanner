@@ -590,7 +590,7 @@ router.put('/:id', (req, res) => {
     // Attendees bijwerken indien meegestuurd
     let attendeeIds;
     if (Array.isArray(req.body.attendees)) {
-      const validIds = req.body.attendees.filter(id => Number.isInteger(id) && id > 0);
+      const validIds = req.body.attendees.filter(uid => Number.isInteger(uid) && uid > 0);
       db.get().prepare(`DELETE FROM event_attendees WHERE event_id = ?`).run(id);
       const insertAttendee = db.get().prepare(
         `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`

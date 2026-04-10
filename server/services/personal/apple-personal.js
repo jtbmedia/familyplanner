@@ -114,12 +114,15 @@ export async function push(event, userId, action) {
       filename:   `${uid}.ics`,
       iCalString: icalData,
     });
-    db.get().prepare(`
-      INSERT INTO event_push_log (event_id, user_id, provider, external_event_id)
-      VALUES (?, ?, 'apple', ?)
-      ON CONFLICT(event_id, user_id, provider) DO UPDATE SET external_event_id = excluded.external_event_id
-    `).run(event.id, userId, uid);
   }
+
+  db.get().prepare(`
+    INSERT INTO event_push_log (event_id, user_id, provider, external_event_id)
+    VALUES (?, ?, 'apple', ?)
+    ON CONFLICT(event_id, user_id, provider) DO UPDATE SET
+      external_event_id = excluded.external_event_id,
+      pushed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+  `).run(event.id, userId, uid);
 
   log.info(`Event ${event.id} ${action} → Apple Calendar (user ${userId})`);
 }
