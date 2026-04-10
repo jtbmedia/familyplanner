@@ -11,6 +11,9 @@ import { stagger } from '/utils/ux.js';
 import { t, formatTime } from '/i18n.js';
 import { esc } from '/utils/html.js';
 
+// Initials helper for avatar chips
+const ini = (name) => (name || '').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+
 // --------------------------------------------------------
 // Konstanten
 // --------------------------------------------------------
@@ -765,6 +768,22 @@ function openEventModal({ mode, event = null, date = null }) {
       });
 
       panel.querySelector('#modal-save').addEventListener('click', () => saveEvent(panel, mode, event?.id));
+
+      // Chip toggle (attendee picker)
+      panel.querySelector('#modal-attendees')?.addEventListener('click', (e) => {
+        const chip = e.target.closest('.attendee-chip');
+        if (!chip) return;
+        const selected = chip.classList.toggle('attendee-chip--selected');
+        chip.setAttribute('aria-pressed', String(selected));
+        const avatar = chip.querySelector('.attendee-chip__avatar');
+        if (selected) {
+          avatar.classList.remove('attendee-chip__avatar--deselected');
+          avatar.style.backgroundColor = chip.dataset.color;
+        } else {
+          avatar.classList.add('attendee-chip__avatar--deselected');
+          avatar.style.backgroundColor = '';
+        }
+      });
     },
   });
 }
@@ -780,12 +799,9 @@ function buildEventModalContent({ mode, event, date }) {
   const endTime   = isEdit && event.end_datetime && event.end_datetime.length > 10
     ? event.end_datetime.slice(11, 16) : '10:00';
 
-  const userOpts = [
-    `<option value="">${t('calendar.assignedNobody')}</option>`,
-    ...state.users.map((u) =>
-      `<option value="${u.id}" ${isEdit && event.assigned_to === u.id ? 'selected' : ''}>${esc(u.display_name)}</option>`
-    ),
-  ].join('');
+  const existingAttendees = isEdit && event.attendee_ids
+    ? event.attendee_ids.split(',').map(Number)
+    : (isEdit && event.assigned_to ? [event.assigned_to] : []);
 
   return `
     <div class="form-group">
@@ -845,8 +861,25 @@ function buildEventModalContent({ mode, event, date }) {
     </div>
 
     <div class="form-group">
-      <label class="form-label" for="modal-assigned">${t('calendar.assignedLabel')}</label>
-      <select class="form-input" id="modal-assigned">${userOpts}</select>
+      <label class="form-label">${t('calendar.attendeesLabel')}</label>
+      <div class="attendee-chips" id="modal-attendees" role="group" aria-label="${t('calendar.attendeesLabel')}">
+        ${state.users.map((u) => {
+          const sel   = existingAttendees.includes(u.id);
+          const color = esc(u.avatar_color || '#8E8E93');
+          return `<button type="button"
+            class="attendee-chip${sel ? ' attendee-chip--selected' : ''}"
+            data-uid="${u.id}"
+            data-color="${color}"
+            aria-pressed="${sel}"
+            aria-label="${esc(u.display_name)}">
+            <span class="attendee-chip__avatar${sel ? '' : ' attendee-chip__avatar--deselected'}"
+                  style="background-color:${sel ? color : ''}">
+              ${ini(u.display_name)}
+            </span>
+            <span class="attendee-chip__name">${esc(u.display_name)}</span>
+          </button>`;
+        }).join('')}
+      </div>
     </div>
 
     <div class="form-group">
@@ -890,7 +923,8 @@ async function saveEvent(overlay, mode, eventId) {
   const allday  = overlay.querySelector('#modal-allday').checked;
   const color   = overlay.querySelector('.color-swatch--active')?.dataset.color || EVENT_COLORS[0];
   const location    = overlay.querySelector('#modal-location').value.trim() || null;
-  const assigned_to = overlay.querySelector('#modal-assigned').value || null;
+  const attendeeEls = overlay.querySelectorAll('.attendee-chip--selected');
+  const attendees   = Array.from(attendeeEls).map(el => parseInt(el.dataset.uid, 10));
   const description = overlay.querySelector('#modal-description').value.trim() || null;
 
   let start_datetime, end_datetime;
@@ -918,22 +952,35 @@ async function saveEvent(overlay, mode, eventId) {
     const body = {
       title, description, start_datetime, end_datetime,
       all_day: allday ? 1 : 0,
-      location, color, assigned_to: assigned_to ? parseInt(assigned_to, 10) : null,
+      location, color, attendees,
       recurrence_rule: rrule.recurrence_rule,
     };
 
+    let res;
     if (mode === 'create') {
-      const res = await api.post('/calendar', body);
+      res = await api.post('/calendar', body);
       state.events.push(res.data);
     } else {
-      const res = await api.put(`/calendar/${eventId}`, body);
+      res = await api.put(`/calendar/${eventId}`, body);
       const idx = state.events.findIndex((e) => e.id === eventId);
       if (idx !== -1) state.events[idx] = res.data;
     }
 
     closeModal();
     renderView();
-    window.oikos?.showToast(mode === 'create' ? t('calendar.createdToast') : t('calendar.savedToast'), 'success');
+    const successMsg = mode === 'create' ? t('calendar.createdToast') : t('calendar.savedToast');
+    window.oikos?.showToast(successMsg, 'success');
+
+    // Push failure warning (shown after success toast)
+    if (res.push && !res.push.ok && Array.isArray(res.push.failed) && res.push.failed.length > 0) {
+      const failedNames = res.push.failed.map((f) => {
+        const u = state.users.find(u => u.id === f.userId);
+        return u ? u.display_name : `#${f.userId}`;
+      }).join(', ');
+      setTimeout(() => {
+        window.oikos?.showToast(t('calendar.pushFailedToast', { names: failedNames }), 'warning');
+      }, 3500);
+    }
   } catch (err) {
     window.oikos?.showToast(err.data?.error ?? t('calendar.saveError'), 'error');
     saveBtn.disabled    = false;
