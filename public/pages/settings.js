@@ -32,32 +32,43 @@ function buildCurrencyOptions(selected) {
  */
 export async function render(container, { user }) {
   // URL-Parameter auswerten (z.B. nach OAuth-Callback)
-  const params   = new URLSearchParams(location.search);
-  const _syncOk  = params.get('sync_ok');
-  const _syncErr = params.get('sync_error');
-  const syncOk   = ['google', 'apple'].includes(_syncOk)  ? _syncOk  : null;
-  const syncErr  = ['google', 'apple'].includes(_syncErr) ? _syncErr : null;
+  const params          = new URLSearchParams(location.search);
+  const _syncOk         = params.get('sync_ok');
+  const _syncErr        = params.get('sync_error');
+  const syncOk          = ['google', 'apple'].includes(_syncOk)  ? _syncOk  : null;
+  const syncErr         = ['google', 'apple'].includes(_syncErr) ? _syncErr : null;
+  const _personalSyncOk = params.get('personal_sync_ok');
+  const _personalSyncErr= params.get('personal_sync_error');
+  const personalSyncOk  = ['google', 'microsoft'].includes(_personalSyncOk)  ? _personalSyncOk  : null;
+  const personalSyncErr = ['google', 'microsoft'].includes(_personalSyncErr) ? _personalSyncErr : null;
+  const selectProvider  = (personalSyncOk && params.get('step') === 'select_calendar') ? personalSyncOk : null;
 
   // State für Familienmitglieder + Sync-Status
-  let users        = [];
-  let googleStatus = { configured: false, connected: false, lastSync: null };
-  let appleStatus  = { configured: false, lastSync: null };
-  let prefs        = { visible_meal_types: ['breakfast', 'lunch', 'dinner', 'snack'], currency: 'EUR' };
-  let categories   = [];
+  let users           = [];
+  let googleStatus    = { configured: false, connected: false, lastSync: null };
+  let appleStatus     = { configured: false, lastSync: null };
+  let prefs           = { visible_meal_types: ['breakfast', 'lunch', 'dinner', 'snack'], currency: 'EUR' };
+  let categories      = [];
+  let personalStatus  = { google: null, apple: null };
+  let personalCals    = [];
 
   try {
-    const [usersRes, gStatus, aStatus, prefsRes, catsRes] = await Promise.allSettled([
+    const [usersRes, gStatus, aStatus, prefsRes, catsRes, personalRes, calsRes] = await Promise.allSettled([
       user.role === 'admin' ? auth.getUsers() : Promise.resolve({ data: [] }),
       api.get('/calendar/google/status'),
       api.get('/calendar/apple/status'),
       api.get('/preferences'),
       api.get('/shopping/categories'),
+      api.get('/calendar/personal/status'),
+      selectProvider ? api.get(`/calendar/personal/calendars/${selectProvider}`) : Promise.resolve({ data: [] }),
     ]);
-    if (usersRes.status === 'fulfilled')  users        = usersRes.value.data  ?? [];
-    if (gStatus.status  === 'fulfilled')  googleStatus = gStatus.value;
-    if (aStatus.status  === 'fulfilled')  appleStatus  = aStatus.value;
-    if (prefsRes.status === 'fulfilled')  prefs        = prefsRes.value.data  ?? prefs;
-    if (catsRes.status  === 'fulfilled')  categories   = catsRes.value.data   ?? [];
+    if (usersRes.status    === 'fulfilled')  users          = usersRes.value.data    ?? [];
+    if (gStatus.status     === 'fulfilled')  googleStatus   = gStatus.value;
+    if (aStatus.status     === 'fulfilled')  appleStatus    = aStatus.value;
+    if (prefsRes.status    === 'fulfilled')  prefs          = prefsRes.value.data    ?? prefs;
+    if (catsRes.status     === 'fulfilled')  categories     = catsRes.value.data     ?? [];
+    if (personalRes.status === 'fulfilled')  personalStatus = personalRes.value.data ?? personalStatus;
+    if (calsRes.status     === 'fulfilled')  personalCals   = calsRes.value.data     ?? [];
   } catch (_) { /* non-critical */ }
 
   const googleStatusText = googleStatus.connected
@@ -72,11 +83,128 @@ export async function render(container, { user }) {
 
   const activeTab = (syncOk || syncErr)
     ? 'calendar'
-    : (sessionStorage.getItem(SETTINGS_TAB_KEY) ?? 'general');
+    : (personalSyncOk || personalSyncErr)
+      ? 'account'
+      : (sessionStorage.getItem(SETTINGS_TAB_KEY) ?? 'general');
 
   const panelHidden = (id) => id === activeTab ? '' : ' hidden';
   const btnClass    = (id) => `settings-tab-btn${id === activeTab ? ' settings-tab-btn--active' : ''}`;
   const btnAria     = (id) => id === activeTab ? 'true' : 'false';
+
+  const PROVIDER_LOGOS = {
+    google: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>`,
+    apple: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+    </svg>`,
+    microsoft: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path fill="#F25022" d="M1 1h10.5v10.5H1z"/>
+      <path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/>
+      <path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/>
+      <path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/>
+    </svg>`,
+  };
+
+  function buildPersonalProviderCard(provider, status, showCalSelect, calendars) {
+    const names  = { google: t('settings.personalGoogle'), apple: t('settings.personalApple'), microsoft: t('settings.personalMicrosoft') };
+    const name   = names[provider];
+    const logoClass = `settings-sync-logo--${provider}`;
+
+    let statusHtml, actionsHtml;
+
+    if (!status) {
+      // Niet verbonden
+      statusHtml  = `<div class="settings-sync-info__status">${t('settings.personalNotConnected')}</div>`;
+      if (provider === 'apple') {
+        actionsHtml = `<form id="personal-apple-form" class="settings-form settings-form--compact">
+          <div class="form-group">
+            <label class="form-label" for="personal-apple-url">${t('settings.personalCaldavUrlLabel')}</label>
+            <input class="form-input" type="url" id="personal-apple-url" placeholder="${t('settings.personalCaldavUrlPlaceholder')}" value="https://caldav.icloud.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="personal-apple-username">${t('settings.personalAppleIdLabel')}</label>
+            <input class="form-input" type="email" id="personal-apple-username" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="personal-apple-password">${t('settings.personalApplePasswordLabel')}</label>
+            <input class="form-input" type="password" id="personal-apple-password" autocomplete="current-password" required />
+            <span class="form-hint">${t('settings.personalApplePasswordHint')}</span>
+          </div>
+          <div id="personal-apple-error" class="form-error" hidden></div>
+          <button type="submit" class="btn btn--primary">${t('settings.personalAppleConnectBtn')}</button>
+          <div id="personal-apple-cal-select" class="settings-personal-cal-select" hidden></div>
+        </form>`;
+      } else {
+        actionsHtml = `<div class="settings-sync-actions">
+          <a href="/api/v1/calendar/personal/connect/${provider}" class="btn btn--primary">${t('settings.personalConnect')}</a>
+        </div>`;
+      }
+    } else if (status.needsReconnect) {
+      // Verbinding verlopen
+      statusHtml  = `<div class="settings-sync-info__status settings-sync-info__status--warning">${t('settings.personalNeedsReconnect')}</div>`;
+      if (provider === 'apple') {
+        actionsHtml = `<form id="personal-apple-form" class="settings-form settings-form--compact">
+          <div class="form-group">
+            <label class="form-label" for="personal-apple-url">${t('settings.personalCaldavUrlLabel')}</label>
+            <input class="form-input" type="url" id="personal-apple-url" placeholder="${t('settings.personalCaldavUrlPlaceholder')}" value="https://caldav.icloud.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="personal-apple-username">${t('settings.personalAppleIdLabel')}</label>
+            <input class="form-input" type="email" id="personal-apple-username" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="personal-apple-password">${t('settings.personalApplePasswordLabel')}</label>
+            <input class="form-input" type="password" id="personal-apple-password" autocomplete="current-password" required />
+            <span class="form-hint">${t('settings.personalApplePasswordHint')}</span>
+          </div>
+          <div id="personal-apple-error" class="form-error" hidden></div>
+          <button type="submit" class="btn btn--primary">${t('settings.personalAppleConnectBtn')}</button>
+          <div id="personal-apple-cal-select" class="settings-personal-cal-select" hidden></div>
+        </form>`;
+      } else {
+        actionsHtml = `<div class="settings-sync-actions">
+          <a href="/api/v1/calendar/personal/connect/${provider}" class="btn btn--primary">${t('settings.personalReconnect')}</a>
+          <button class="btn btn--danger-outline personal-disconnect-btn" data-provider="${provider}">${t('settings.personalDisconnect')}</button>
+        </div>`;
+      }
+    } else {
+      // Verbonden
+      const calName = esc(status.calendarName || '');
+      statusHtml    = `<div class="settings-sync-info__status settings-sync-info__status--connected">${t('settings.personalConnected', { calendarName: calName || '—' })}</div>`;
+      actionsHtml   = `<div class="settings-sync-actions">
+        <button class="btn btn--danger-outline personal-disconnect-btn" data-provider="${provider}">${t('settings.personalDisconnect')}</button>
+      </div>`;
+      // Calendar select shown after OAuth (step=select_calendar)
+      if (showCalSelect && provider !== 'apple') {
+        const opts = calendars.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+        actionsHtml += `
+          <div class="settings-personal-cal-select" id="personal-cal-select-${provider}">
+            <label class="form-label" for="personal-cal-input-${provider}">${t('settings.personalSelectCalendar')}</label>
+            <select class="form-input" id="personal-cal-input-${provider}">
+              <option value="">${t('settings.personalSelectPlaceholder')}</option>
+              ${opts}
+            </select>
+            <button class="btn btn--primary personal-cal-save-btn" data-provider="${provider}">${t('common.save')}</button>
+          </div>`;
+      }
+    }
+
+    return `
+      <div class="settings-card" id="personal-card-${provider}">
+        <div class="settings-sync-header">
+          <div class="settings-sync-logo ${logoClass}">${PROVIDER_LOGOS[provider]}</div>
+          <div class="settings-sync-info">
+            <div class="settings-sync-info__name">${name}</div>
+            ${statusHtml}
+          </div>
+        </div>
+        ${actionsHtml}
+      </div>`;
+  }
 
   container.innerHTML = `
     <div class="page settings-page">
@@ -306,6 +434,21 @@ export async function render(container, { user }) {
           </div>
         </section>
 
+        <section class="settings-section">
+          <h2 class="settings-section__title">${t('settings.sectionPersonalCalendar')}</h2>
+
+          ${personalSyncOk ? `<div class="settings-banner settings-banner--success">${
+            personalSyncOk === 'google' ? t('settings.personalSyncSuccessGoogle') : t('settings.personalSyncSuccessMicrosoft')
+          }</div>` : ''}
+          ${personalSyncErr ? `<div class="settings-banner settings-banner--error">${
+            personalSyncErr === 'google' ? t('settings.personalSyncErrorGoogle') : t('settings.personalSyncErrorMicrosoft')
+          }</div>` : ''}
+
+          ${buildPersonalProviderCard('google', personalStatus.google, selectProvider === 'google', personalCals)}
+          ${buildPersonalProviderCard('apple', personalStatus.apple, false, [])}
+          ${'microsoft' in personalStatus ? buildPersonalProviderCard('microsoft', personalStatus.microsoft, selectProvider === 'microsoft', personalCals) : ''}
+        </section>
+
         ${user?.role === 'admin' ? `
         <section class="settings-section">
           <h2 class="settings-section__title">${t('settings.sectionFamily')}</h2>
@@ -368,11 +511,104 @@ export async function render(container, { user }) {
   }
 
   bindEvents(container, user, categories);
+  bindPersonalCalendarEvents(container);
 }
 
 // --------------------------------------------------------
 // Event-Binding
 // --------------------------------------------------------
+
+function bindPersonalCalendarEvents(container) {
+  // Disconnect buttons
+  container.querySelectorAll('.personal-disconnect-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const provider = btn.dataset.provider;
+      const providerName = {
+        google: t('settings.personalGoogle'),
+        apple:  t('settings.personalApple'),
+        microsoft: t('settings.personalMicrosoft'),
+      }[provider] || provider;
+
+      if (!await confirmModal(t('settings.personalDisconnectConfirm', { provider: providerName }), { danger: true })) return;
+      try {
+        await api.delete(`/calendar/personal/disconnect/${provider}`);
+        window.oikos?.showToast(t('settings.personalDisconnectedToast', { provider: providerName }), 'success');
+        window.oikos?.navigate('/settings');
+      } catch (err) {
+        window.oikos?.showToast(err.data?.error ?? t('common.errorGeneric'), 'danger');
+      }
+    });
+  });
+
+  // Google / Microsoft calendar save buttons (shown after OAuth)
+  container.querySelectorAll('.personal-cal-save-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const provider = btn.dataset.provider;
+      const select   = container.querySelector(`#personal-cal-input-${provider}`);
+      if (!select?.value) return;
+      const calendarId   = select.value;
+      const calendarName = select.options[select.selectedIndex]?.text || calendarId;
+      try {
+        btn.disabled = true;
+        await api.post('/calendar/personal/select-calendar', { provider, calendarId, calendarName });
+        window.oikos?.showToast(t('settings.personalCalendarSaved'), 'success');
+        window.oikos?.navigate('/settings');
+      } catch (err) {
+        btn.disabled = false;
+        window.oikos?.showToast(err.data?.error ?? t('common.errorGeneric'), 'danger');
+      }
+    });
+  });
+
+  // Apple CalDAV connect form
+  const appleForm = container.querySelector('#personal-apple-form');
+  if (appleForm) {
+    appleForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url      = appleForm.querySelector('#personal-apple-url').value.trim();
+      const username = appleForm.querySelector('#personal-apple-username').value.trim();
+      const password = appleForm.querySelector('#personal-apple-password').value;
+      const errDiv   = appleForm.querySelector('#personal-apple-error');
+      const submitBtn= appleForm.querySelector('button[type="submit"]');
+      errDiv.hidden  = true;
+      submitBtn.disabled  = true;
+      submitBtn.textContent = t('settings.personalAppleConnecting');
+
+      try {
+        const res = await api.post('/calendar/personal/connect/apple', { url, username, password });
+        const calendars = res.data ?? [];
+        // Show calendar selector inline
+        const calSelectDiv = appleForm.querySelector('#personal-apple-cal-select');
+        calSelectDiv.hidden = false;
+        const opts = calendars.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+        calSelectDiv.innerHTML = `
+          <label class="form-label" for="personal-apple-cal-input">${t('settings.personalSelectCalendar')}</label>
+          <select class="form-input" id="personal-apple-cal-input">
+            <option value="">${t('settings.personalSelectPlaceholder')}</option>
+            ${opts}
+          </select>
+          <button class="btn btn--primary" id="personal-apple-cal-save">${t('common.save')}</button>`;
+
+        calSelectDiv.querySelector('#personal-apple-cal-save').addEventListener('click', async () => {
+          const sel  = calSelectDiv.querySelector('#personal-apple-cal-input');
+          if (!sel.value) return;
+          const calId   = sel.value;
+          const calName = sel.options[sel.selectedIndex]?.text || calId;
+          await api.post('/calendar/personal/select-calendar', { provider: 'apple', calendarId: calId, calendarName: calName });
+          window.oikos?.showToast(t('settings.personalAppleConnectedToast'), 'success');
+          window.oikos?.navigate('/settings');
+        });
+
+        window.oikos?.showToast(t('settings.personalAppleConnectedToast'), 'success');
+      } catch (err) {
+        errDiv.textContent = err.data?.error ?? t('common.errorGeneric');
+        errDiv.hidden = false;
+        submitBtn.disabled   = false;
+        submitBtn.textContent = t('settings.personalAppleConnectBtn');
+      }
+    });
+  }
+}
 
 function bindEvents(container, user, categories) {
   bindTabEvents(container);
