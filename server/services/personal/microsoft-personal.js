@@ -206,9 +206,14 @@ export async function push(event, userId, action) {
  * @param {object} session  - req.session
  * @returns {string} Auth URL
  */
-export function getAuthUrl(session) {
+export function getAuthUrl(session, userId) {
   const state = crypto.randomBytes(32).toString('hex');
   session.microsoftOAuthState = state;
+  // Sla state ook op in DB zodat de callback geen sessie-cookie nodig heeft
+  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minuten
+  db.get().prepare(
+    `INSERT OR REPLACE INTO oauth_pending (state, user_id, provider, expires_at) VALUES (?, ?, 'microsoft', ?)`
+  ).run(state, userId, expiresAt);
   const params = new URLSearchParams({
     client_id:     process.env.MICROSOFT_CLIENT_ID,
     response_type: 'code',

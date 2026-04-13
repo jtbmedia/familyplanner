@@ -410,6 +410,18 @@ const MIGRATIONS = [
               WHERE user_id = OLD.user_id AND provider = OLD.provider; END;
     `,
   },
+  {
+    version: 2,
+    description: 'OAuth pending state tabel voor publieke callback-routes',
+    up: `
+      CREATE TABLE IF NOT EXISTS oauth_pending (
+        state      TEXT    PRIMARY KEY,
+        user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft')),
+        expires_at INTEGER NOT NULL
+      );
+    `,
+  },
 ];
 
 /**

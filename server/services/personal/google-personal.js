@@ -205,10 +205,15 @@ export async function push(event, userId, action) {
  * @param {object} session  - req.session
  * @returns {string} Auth URL
  */
-export function getAuthUrl(session) {
+export function getAuthUrl(session, userId) {
   const client = createOAuth2Client();
   const state = crypto.randomBytes(32).toString('hex');
   session.googlePersonalOAuthState = state;
+  // Sla state ook op in DB zodat de callback geen sessie-cookie nodig heeft
+  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minuten
+  db.get().prepare(
+    `INSERT OR REPLACE INTO oauth_pending (state, user_id, provider, expires_at) VALUES (?, ?, 'google', ?)`
+  ).run(state, userId, expiresAt);
   return client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/calendar.events'],

@@ -25,6 +25,7 @@ import budgetRouter from './routes/budget.js';
 import weatherRouter from './routes/weather.js';
 import preferencesRouter from './routes/preferences.js';
 import calendarPersonalRouter from './routes/calendar-personal.js';
+import oauthCallbacksRouter   from './routes/oauth-callbacks.js';
 
 const log     = createLogger('Server');
 const logSync = createLogger('Sync');
@@ -156,6 +157,9 @@ app.use('/api/', apiLimiter);
 // API-Routen
 // --------------------------------------------------------
 app.use('/api/v1/auth', authRouter);
+
+// OAuth-callbacks zijn publiek: externe provider redirect stuurt geen sessie-cookie mee
+app.use('/api/v1/oauth', oauthCallbacksRouter);
 
 // Alle weiteren API-Routen erfordern Authentifizierung + CSRF-Schutz
 app.use('/api/v1', requireAuth);
