@@ -180,7 +180,10 @@ router.get('/upcoming', (req, res) => {
     const rawEvents = db.get().prepare(`
       SELECT e.*,
              u_assigned.display_name AS assigned_name,
-             u_assigned.avatar_color AS assigned_color
+             u_assigned.avatar_color AS assigned_color,
+             (SELECT GROUP_CONCAT(ea.user_id)
+              FROM event_attendees ea
+              WHERE ea.event_id = e.id) AS attendee_ids
       FROM calendar_events e
       LEFT JOIN users u_assigned ON u_assigned.id = e.assigned_to
       WHERE (
@@ -484,46 +487,66 @@ router.post('/', async (req, res) => {
       if (!user) return res.status(400).json({ error: 'assigned_to: Benutzer nicht gefunden', code: 400 });
     }
 
-    const result = db.get().prepare(`
-      INSERT INTO calendar_events
-        (title, description, start_datetime, end_datetime, all_day,
-         location, color, assigned_to, created_by, recurrence_rule)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      vTitle.value, vDesc.value,
-      vStart.value, vEnd.value,
-      all_day ? 1 : 0, vLoc.value,
-      vColor.value, assigned_to || null,
-      req.session.userId, vRrule.value
-    );
+    // Attendees valideren vóór INSERT
+    const rawAttendees = Array.isArray(req.body.attendees) ? req.body.attendees : [];
+    let attendeeIds = rawAttendees.filter(uid => Number.isInteger(uid) && uid > 0);
+    if (attendeeIds.length === 0 && Number.isInteger(assigned_to) && assigned_to > 0) {
+      attendeeIds.push(assigned_to);
+    }
+    if (attendeeIds.length > 50) {
+      return res.status(400).json({ error: 'Te veel deelnemers (max 50)', code: 400 });
+    }
+    if (attendeeIds.length > 0) {
+      const foundIds = db.get().prepare(
+        `SELECT id FROM users WHERE id IN (${attendeeIds.map(() => '?').join(',')})`
+      ).all(...attendeeIds).map(r => r.id);
+      const missingIds = attendeeIds.filter(uid => !foundIds.includes(uid));
+      if (missingIds.length > 0) {
+        return res.status(400).json({ error: `attendees: gebruiker(s) niet gevonden: ${missingIds.join(', ')}`, code: 400 });
+      }
+    }
 
+    // Transactie: event + deelnemers atomisch invoegen
+    let newEventId;
+    db.get().transaction(() => {
+      const result = db.get().prepare(`
+        INSERT INTO calendar_events
+          (title, description, start_datetime, end_datetime, all_day,
+           location, color, assigned_to, created_by, recurrence_rule)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        vTitle.value, vDesc.value,
+        vStart.value, vEnd.value,
+        all_day ? 1 : 0, vLoc.value,
+        vColor.value, assigned_to || null,
+        req.session.userId, vRrule.value
+      );
+      newEventId = result.lastInsertRowid;
+      if (attendeeIds.length > 0) {
+        const insertAttendee = db.get().prepare(
+          `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
+        );
+        for (const uid of attendeeIds) insertAttendee.run(newEventId, uid);
+      }
+    })();
+
+    // Re-fetch inclusief attendee_ids (na INSERT, zodat subquery correct teruggeeft)
     const event = db.get().prepare(`
       SELECT e.*,
              u_assigned.display_name AS assigned_name,
              u_assigned.avatar_color AS assigned_color,
-             u_created.display_name  AS creator_name
+             u_created.display_name  AS creator_name,
+             (SELECT GROUP_CONCAT(ea.user_id)
+              FROM event_attendees ea
+              WHERE ea.event_id = e.id) AS attendee_ids
       FROM calendar_events e
       LEFT JOIN users u_assigned ON u_assigned.id = e.assigned_to
       LEFT JOIN users u_created  ON u_created.id  = e.created_by
       WHERE e.id = ?
-    `).get(result.lastInsertRowid);
-
-    // Attendees opslaan en push starten
-    const rawAttendees = Array.isArray(req.body.attendees) ? req.body.attendees : [];
-    const attendeeIds = rawAttendees.filter(uid => Number.isInteger(uid) && uid > 0);
-
-    // Terugval: assigned_to als attendee als geen attendees lijst
-    if (attendeeIds.length === 0 && Number.isInteger(assigned_to) && assigned_to > 0) {
-      attendeeIds.push(assigned_to);
-    }
+    `).get(newEventId);
 
     let pushResult = { ok: true };
     if (attendeeIds.length > 0) {
-      const insertAttendee = db.get().prepare(
-        `INSERT OR IGNORE INTO event_attendees (event_id, user_id) VALUES (?, ?)`
-      );
-      for (const uid of attendeeIds) insertAttendee.run(result.lastInsertRowid, uid);
-
       try {
         pushResult = await personalPush.push(event, attendeeIds, 'create');
         if (!pushResult.ok) log.warn('Push gedeeltelijk mislukt (create):', JSON.stringify(pushResult.failed));
@@ -602,7 +625,10 @@ router.put('/:id', async (req, res) => {
       SELECT e.*,
              u_assigned.display_name AS assigned_name,
              u_assigned.avatar_color AS assigned_color,
-             u_created.display_name  AS creator_name
+             u_created.display_name  AS creator_name,
+             (SELECT GROUP_CONCAT(ea.user_id)
+              FROM event_attendees ea
+              WHERE ea.event_id = e.id) AS attendee_ids
       FROM calendar_events e
       LEFT JOIN users u_assigned ON u_assigned.id = e.assigned_to
       LEFT JOIN users u_created  ON u_created.id  = e.created_by
@@ -613,6 +639,18 @@ router.put('/:id', async (req, res) => {
     let attendeeIds;
     if (Array.isArray(req.body.attendees)) {
       const validIds = req.body.attendees.filter(uid => Number.isInteger(uid) && uid > 0);
+      if (validIds.length > 50) {
+        return res.status(400).json({ error: 'Te veel deelnemers (max 50)', code: 400 });
+      }
+      if (validIds.length > 0) {
+        const foundIds = db.get().prepare(
+          `SELECT id FROM users WHERE id IN (${validIds.map(() => '?').join(',')})`
+        ).all(...validIds).map(r => r.id);
+        const missingIds = validIds.filter(uid => !foundIds.includes(uid));
+        if (missingIds.length > 0) {
+          return res.status(400).json({ error: `attendees: gebruiker(s) niet gevonden: ${missingIds.join(', ')}`, code: 400 });
+        }
+      }
       db.get().transaction(() => {
         db.get().prepare(`DELETE FROM event_attendees WHERE event_id = ?`).run(id);
         const insertAttendee = db.get().prepare(

@@ -874,7 +874,7 @@ function buildEventModalContent({ mode, event, date }) {
             aria-label="${esc(u.display_name)}">
             <span class="attendee-chip__avatar${sel ? '' : ' attendee-chip__avatar--deselected'}"
                   style="background-color:${sel ? color : ''}">
-              ${ini(u.display_name)}
+              ${esc(ini(u.display_name))}
             </span>
             <span class="attendee-chip__name">${esc(u.display_name)}</span>
           </button>`;

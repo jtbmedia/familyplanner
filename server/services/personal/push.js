@@ -32,32 +32,30 @@ export async function push(event, userIds, action) {
 
   const errors = [];
 
-  for (const userId of userIds) {
-    // Haal alle verbonden providers op voor deze gebruiker
-    // Alleen actieve (needs_reconnect = 0) met een geselecteerde kalender
-    // Apple vereist ook caldav_url, caldav_username en caldav_password
-    const tokens = db.get().prepare(`
-      SELECT provider FROM user_calendar_tokens
-      WHERE user_id = ?
-        AND needs_reconnect = 0
-        AND (
-          (provider != 'apple' AND calendar_id IS NOT NULL)
-          OR
-          (provider = 'apple' AND caldav_url IS NOT NULL AND caldav_username IS NOT NULL AND caldav_password IS NOT NULL AND calendar_id IS NOT NULL)
-        )
-    `).all(userId);
+  // Batch: één query voor alle gebruikers tegelijk
+  const placeholders = userIds.map(() => '?').join(',');
+  const tokens = db.get().prepare(`
+    SELECT user_id, provider FROM user_calendar_tokens
+    WHERE user_id IN (${placeholders})
+      AND needs_reconnect = 0
+      AND (
+        (provider != 'apple' AND calendar_id IS NOT NULL)
+        OR
+        (provider = 'apple' AND caldav_url IS NOT NULL AND caldav_username IS NOT NULL AND caldav_password IS NOT NULL AND calendar_id IS NOT NULL)
+      )
+  `).all(...userIds);
 
-    for (const { provider } of tokens) {
+  // Parallel: alle pushes tegelijk uitvoeren
+  await Promise.allSettled(
+    tokens.map(({ user_id: userId, provider }) => {
       const service = SERVICES[provider];
-      if (!service) continue;
-      try {
-        await service.push(event, userId, action);
-      } catch (err) {
+      if (!service) return Promise.resolve();
+      return service.push(event, userId, action).catch((err) => {
         log.error(`Push mislukt (user ${userId}, provider ${provider}): ${err.message}`);
         errors.push({ userId, provider, error: err.message });
-      }
-    }
-  }
+      });
+    })
+  );
 
   return errors.length > 0 ? { ok: false, failed: errors } : { ok: true };
 }
