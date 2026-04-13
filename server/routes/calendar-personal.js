@@ -93,6 +93,38 @@ router.get('/connect/google', (req, res) => {
   }
 });
 
+// ── GET /connect/google/callback ─────────────────────────────────────────────
+// Google OAuth-callback. Verwerk code, sla tokens op, stuur door naar settings.
+
+router.get('/connect/google/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+
+  if (error) {
+    log.warn(`Google OAuth afgewezen: ${error}`);
+    return res.redirect('/settings?personal_sync_error=google');
+  }
+
+  const expectedState = req.session.googlePersonalOAuthState;
+  if (!state || !expectedState || state !== expectedState) {
+    log.warn('Google OAuth state mismatch — mogelijke CSRF-aanval');
+    return res.redirect('/settings?personal_sync_error=google');
+  }
+  delete req.session.googlePersonalOAuthState;
+
+  if (!code) {
+    return res.redirect('/settings?personal_sync_error=google');
+  }
+
+  try {
+    const userId = req.session.userId;
+    await googlePersonal.handleCallback(code, userId);
+    res.redirect('/settings?personal_sync_ok=google&step=select_calendar');
+  } catch (err) {
+    log.error('Google OAuth callback mislukt', err);
+    res.redirect('/settings?personal_sync_error=google');
+  }
+});
+
 // ── GET /connect/microsoft ───────────────────────────────────────────────────
 // Start Microsoft OAuth-flow. Browser navigeert hiernaartoe.
 
@@ -106,6 +138,38 @@ router.get('/connect/microsoft', (req, res) => {
   } catch (err) {
     log.error('', err);
     res.status(503).json({ error: err.message, code: 503 });
+  }
+});
+
+// ── GET /connect/microsoft/callback ─────────────────────────────────────────
+// Microsoft OAuth-callback. Verwerk code, sla tokens op, stuur door naar settings.
+
+router.get('/connect/microsoft/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+
+  if (error) {
+    log.warn(`Microsoft OAuth afgewezen: ${error}`);
+    return res.redirect('/settings?personal_sync_error=microsoft');
+  }
+
+  const expectedState = req.session.microsoftOAuthState;
+  if (!state || !expectedState || state !== expectedState) {
+    log.warn('Microsoft OAuth state mismatch — mogelijke CSRF-aanval');
+    return res.redirect('/settings?personal_sync_error=microsoft');
+  }
+  delete req.session.microsoftOAuthState;
+
+  if (!code) {
+    return res.redirect('/settings?personal_sync_error=microsoft');
+  }
+
+  try {
+    const userId = req.session.userId;
+    await microsoftPersonal.handleCallback(code, userId);
+    res.redirect('/settings?personal_sync_ok=microsoft&step=select_calendar');
+  } catch (err) {
+    log.error('Microsoft OAuth callback mislukt', err);
+    res.redirect('/settings?personal_sync_error=microsoft');
   }
 });
 

@@ -104,7 +104,11 @@ const sessionMiddleware = session({
     httpOnly: true,
     // secure=true by default; set SESSION_SECURE=false in .env to allow HTTP (local dev without reverse proxy)
     secure: process.env.SESSION_SECURE !== 'false',
-    sameSite: 'strict',
+    // 'lax' is required for OAuth callbacks: with 'strict', the session cookie
+    // is not sent when the browser is redirected back from an external provider
+    // (cross-site top-level navigation). CSRF protection for mutations is handled
+    // separately by csrfMiddleware + state parameter validation in OAuth routes.
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 Tage in ms
   },
 });
