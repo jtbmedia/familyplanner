@@ -52,6 +52,16 @@ function init() {
 
   migrate();
 
+  // Zeker stellen dat de oauth_pending tabel altijd bestaat (ook als migratie mislukt)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS oauth_pending (
+      state      TEXT    PRIMARY KEY,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft')),
+      expires_at INTEGER NOT NULL
+    );
+  `);
+
   log.info(`Verbunden: ${DB_PATH} | Schema v${currentVersion()}`);
   return db;
 }
