@@ -518,6 +518,7 @@
     "syncSuccessMicrosoft": "Sincronizzazione calendario con Microsoft connessa con successo.",
     "syncErrorMicrosoft": "Connessione con Microsoft fallita. Riprova.",
     "microsoftDisconnectConfirm": "Disconnettere Microsoft Calendar? Gli eventi sincronizzati rimarranno in locale.",
+    "microsoftOnlyAdmin": "Solo l'amministratore può connettere Microsoft Calendar.",
     "addMember": "+ Aggiungi membro",
     "newMemberTitle": "Nuovo membro familiare",
     "usernameLabel": "Nome utente",

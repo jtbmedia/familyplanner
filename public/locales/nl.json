@@ -518,6 +518,7 @@
     "syncSuccessMicrosoft": "Kalendersync met Microsoft succesvol verbonden.",
     "syncErrorMicrosoft": "Verbinding met Microsoft mislukt. Probeer opnieuw.",
     "microsoftDisconnectConfirm": "Microsoft Calendar loskoppelen? Gesynchroniseerde events blijven lokaal bewaard.",
+    "microsoftOnlyAdmin": "Alleen de beheerder kan Microsoft Calendar koppelen.",
     "addMember": "+ Gezinslid toevoegen",
     "newMemberTitle": "Nieuw gezinslid",
     "usernameLabel": "Gebruikersnaam",

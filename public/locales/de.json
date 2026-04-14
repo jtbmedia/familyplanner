@@ -518,6 +518,7 @@
     "syncSuccessMicrosoft": "Kalendersynchronisation mit Microsoft erfolgreich verbunden.",
     "syncErrorMicrosoft": "Verbindung mit Microsoft fehlgeschlagen. Bitte erneut versuchen.",
     "microsoftDisconnectConfirm": "Microsoft Calendar trennen? Synchronisierte Termine bleiben lokal erhalten.",
+    "microsoftOnlyAdmin": "Nur der Administrator kann Microsoft Calendar verbinden.",
     "addMember": "+ Mitglied hinzufügen",
     "newMemberTitle": "Neues Familienmitglied",
     "usernameLabel": "Benutzername",

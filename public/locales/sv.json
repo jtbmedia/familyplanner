@@ -518,6 +518,7 @@
     "syncSuccessMicrosoft": "Kalendersynkronisering med Microsoft ansluten.",
     "syncErrorMicrosoft": "Anslutning till Microsoft misslyckades. Försök igen.",
     "microsoftDisconnectConfirm": "Koppla bort Microsoft Calendar? Synkade händelser finns kvar lokalt.",
+    "microsoftOnlyAdmin": "Endast administratören kan ansluta Microsoft Calendar.",
     "addMember": "+ Lägg till medlem",
     "newMemberTitle": "Ny familjemedlem",
     "usernameLabel": "Användarnamn",

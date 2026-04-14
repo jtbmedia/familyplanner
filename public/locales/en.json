@@ -518,6 +518,7 @@
     "syncSuccessMicrosoft": "Calendar sync with Microsoft connected successfully.",
     "syncErrorMicrosoft": "Connection with Microsoft failed. Please try again.",
     "microsoftDisconnectConfirm": "Disconnect Microsoft Calendar? Synced events will remain locally.",
+    "microsoftOnlyAdmin": "Only admin can connect Microsoft Calendar.",
     "addMember": "+ Add member",
     "newMemberTitle": "New Family Member",
     "usernameLabel": "Username",

@@ -314,7 +314,7 @@ export async function render(container, { user }) {
                   ${user?.role === 'admin' ? `<button class="btn btn--danger-outline" id="microsoft-disconnect-btn">${t('settings.disconnect')}</button>` : ''}
                 ` : user?.role === 'admin' ? `
                   <a href="/api/v1/calendar/microsoft/auth" class="btn btn--primary">${t('settings.connectMicrosoft')}</a>
-                ` : `<span class="form-hint">${t('settings.googleOnlyAdmin')}</span>`}
+                ` : `<span class="form-hint">${t('settings.microsoftOnlyAdmin')}</span>`}
               </div>
             ` : ''}
           </div>
