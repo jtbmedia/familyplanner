@@ -421,7 +421,7 @@ const MIGRATIONS = [
     `,
   },
   {
-    version: 2,
+    version: 8,
     description: 'OAuth pending state tabel voor publieke callback-routes',
     up: `
       CREATE TABLE IF NOT EXISTS oauth_pending (
@@ -433,7 +433,7 @@ const MIGRATIONS = [
     `,
   },
   {
-    version: 3,
+    version: 9,
     description: 'oauth_pending CHECK constraint uitbreiden met microsoft_shared',
     up: `
       CREATE TABLE IF NOT EXISTS oauth_pending_new (
