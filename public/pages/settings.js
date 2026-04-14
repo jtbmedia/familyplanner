@@ -35,8 +35,8 @@ export async function render(container, { user }) {
   const params          = new URLSearchParams(location.search);
   const _syncOk         = params.get('sync_ok');
   const _syncErr        = params.get('sync_error');
-  const syncOk          = ['google', 'apple'].includes(_syncOk)  ? _syncOk  : null;
-  const syncErr         = ['google', 'apple'].includes(_syncErr) ? _syncErr : null;
+  const syncOk          = ['google', 'apple', 'microsoft'].includes(_syncOk)  ? _syncOk  : null;
+  const syncErr         = ['google', 'apple', 'microsoft'].includes(_syncErr) ? _syncErr : null;
   const _personalSyncOk = params.get('personal_sync_ok');
   const _personalSyncErr= params.get('personal_sync_error');
   const personalSyncOk  = ['google', 'microsoft'].includes(_personalSyncOk)  ? _personalSyncOk  : null;
@@ -47,16 +47,18 @@ export async function render(container, { user }) {
   let users           = [];
   let googleStatus    = { configured: false, connected: false, lastSync: null };
   let appleStatus     = { configured: false, lastSync: null };
+  let microsoftStatus = { configured: false, connected: false, lastSync: null };
   let prefs           = { visible_meal_types: ['breakfast', 'lunch', 'dinner', 'snack'], currency: 'EUR' };
   let categories      = [];
   let personalStatus  = { google: null, apple: null };
   let personalCals    = [];
 
   try {
-    const [usersRes, gStatus, aStatus, prefsRes, catsRes, personalRes, calsRes] = await Promise.allSettled([
+    const [usersRes, gStatus, aStatus, mStatus, prefsRes, catsRes, personalRes, calsRes] = await Promise.allSettled([
       user.role === 'admin' ? auth.getUsers() : Promise.resolve({ data: [] }),
       api.get('/calendar/google/status'),
       api.get('/calendar/apple/status'),
+      api.get('/calendar/microsoft/status'),
       api.get('/preferences'),
       api.get('/shopping/categories'),
       api.get('/calendar/personal/status'),
@@ -65,6 +67,7 @@ export async function render(container, { user }) {
     if (usersRes.status    === 'fulfilled')  users          = usersRes.value.data    ?? [];
     if (gStatus.status     === 'fulfilled')  googleStatus   = gStatus.value;
     if (aStatus.status     === 'fulfilled')  appleStatus    = aStatus.value;
+    if (mStatus.status     === 'fulfilled')  microsoftStatus = mStatus.value;
     if (prefsRes.status    === 'fulfilled')  prefs          = prefsRes.value.data    ?? prefs;
     if (catsRes.status     === 'fulfilled')  categories     = catsRes.value.data     ?? [];
     if (personalRes.status === 'fulfilled')  personalStatus = personalRes.value.data ?? personalStatus;
@@ -80,6 +83,10 @@ export async function render(container, { user }) {
     : appleStatus.configured
       ? (appleStatus.lastSync ? t('settings.configuredLastSync', { date: formatDateTime(appleStatus.lastSync) }) : t('settings.configured'))
       : t('settings.notConnected');
+
+  const microsoftStatusText = microsoftStatus.connected
+    ? (microsoftStatus.lastSync ? t('settings.connectedLastSync', { date: formatDateTime(microsoftStatus.lastSync) }) : t('settings.connected'))
+    : microsoftStatus.configured ? t('settings.notConnected') : t('settings.notConfigured');
 
   const activeTab = (syncOk || syncErr)
     ? 'calendar'
@@ -97,8 +104,16 @@ export async function render(container, { user }) {
         <h1 class="page__title">${t('settings.title')}</h1>
       </div>
 
-      ${syncOk  ? `<div class="settings-banner settings-banner--success">${syncOk === 'google' ? t('settings.syncSuccessGoogle') : t('settings.syncSuccessApple')}</div>` : ''}
-      ${syncErr ? `<div class="settings-banner settings-banner--error">${syncErr === 'google' ? t('settings.syncErrorGoogle') : t('settings.syncErrorApple')}</div>` : ''}
+      ${syncOk  ? `<div class="settings-banner settings-banner--success">${
+        syncOk === 'google' ? t('settings.syncSuccessGoogle') :
+        syncOk === 'microsoft' ? t('settings.syncSuccessMicrosoft') :
+        t('settings.syncSuccessApple')
+      }</div>` : ''}
+      ${syncErr ? `<div class="settings-banner settings-banner--error">${
+        syncErr === 'google' ? t('settings.syncErrorGoogle') :
+        syncErr === 'microsoft' ? t('settings.syncErrorMicrosoft') :
+        t('settings.syncErrorApple')
+      }</div>` : ''}
 
       <nav class="settings-tabs" role="tablist" aria-label="${t('settings.tabsAriaLabel')}">
         <button class="${btnClass('general')}"  role="tab" data-tab="general"  aria-selected="${btnAria('general')}">${t('settings.tabGeneral')}</button>
@@ -277,6 +292,31 @@ export async function render(container, { user }) {
                 <button type="submit" class="btn btn--primary" id="apple-connect-btn">${t('settings.appleConnectBtn')}</button>
               </form>
             ` : `<span class="form-hint">${t('settings.appleOnlyAdmin')}</span>`}
+          </div>
+
+          <!-- Microsoft Calendar -->
+          <div class="settings-card">
+            <div class="settings-sync-header">
+              <div class="settings-sync-logo settings-sync-logo--microsoft">
+                <svg viewBox="0 0 21 21" width="24" height="24"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+              </div>
+              <div class="settings-sync-info">
+                <div class="settings-sync-info__name">${t('settings.microsoftCalendar')}</div>
+                <div class="settings-sync-info__status ${microsoftStatus.connected ? 'settings-sync-info__status--connected' : ''}">
+                  ${microsoftStatusText}
+                </div>
+              </div>
+            </div>
+            ${microsoftStatus.configured ? `
+              <div class="settings-sync-actions">
+                ${microsoftStatus.connected ? `
+                  <button class="btn btn--secondary" id="microsoft-sync-btn">${t('settings.syncNow')}</button>
+                  ${user?.role === 'admin' ? `<button class="btn btn--danger-outline" id="microsoft-disconnect-btn">${t('settings.disconnect')}</button>` : ''}
+                ` : user?.role === 'admin' ? `
+                  <a href="/api/v1/calendar/microsoft/auth" class="btn btn--primary">${t('settings.connectMicrosoft')}</a>
+                ` : `<span class="form-hint">${t('settings.googleOnlyAdmin')}</span>`}
+              </div>
+            ` : ''}
           </div>
         </section>
       </div>
@@ -752,6 +792,39 @@ function bindEvents(container, user, categories) {
       try {
         await api.delete('/calendar/apple/disconnect');
         window.oikos?.showToast(t('settings.disconnectedToast', { provider: 'Apple Calendar' }), 'default');
+        window.oikos?.navigate('/settings');
+      } catch (err) {
+        window.oikos?.showToast(err.message, 'danger');
+      }
+    });
+  }
+
+  // Microsoft Sync
+  const microsoftSyncBtn = container.querySelector('#microsoft-sync-btn');
+  if (microsoftSyncBtn) {
+    microsoftSyncBtn.addEventListener('click', async () => {
+      microsoftSyncBtn.disabled = true;
+      microsoftSyncBtn.textContent = t('settings.synchronizing');
+      try {
+        await api.post('/calendar/microsoft/sync', {});
+        window.oikos?.showToast(t('settings.syncSuccess', { provider: 'Microsoft / Outlook' }), 'success');
+      } catch (err) {
+        window.oikos?.showToast(err.message, 'danger');
+      } finally {
+        microsoftSyncBtn.disabled = false;
+        microsoftSyncBtn.textContent = t('settings.syncNow');
+      }
+    });
+  }
+
+  // Microsoft Disconnect (Admin)
+  const microsoftDisconnectBtn = container.querySelector('#microsoft-disconnect-btn');
+  if (microsoftDisconnectBtn) {
+    microsoftDisconnectBtn.addEventListener('click', async () => {
+      if (!await confirmModal(t('settings.microsoftDisconnectConfirm'), { danger: true })) return;
+      try {
+        await api.delete('/calendar/microsoft/disconnect');
+        window.oikos?.showToast(t('settings.disconnectedToast', { provider: 'Microsoft / Outlook' }), 'default');
         window.oikos?.navigate('/settings');
       } catch (err) {
         window.oikos?.showToast(err.message, 'danger');
