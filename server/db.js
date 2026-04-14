@@ -432,6 +432,21 @@ const MIGRATIONS = [
       );
     `,
   },
+  {
+    version: 3,
+    description: 'oauth_pending CHECK constraint uitbreiden met microsoft_shared',
+    up: `
+      CREATE TABLE IF NOT EXISTS oauth_pending_new (
+        state      TEXT    PRIMARY KEY,
+        user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft', 'microsoft_shared')),
+        expires_at INTEGER NOT NULL
+      );
+      INSERT OR IGNORE INTO oauth_pending_new SELECT * FROM oauth_pending;
+      DROP TABLE oauth_pending;
+      ALTER TABLE oauth_pending_new RENAME TO oauth_pending;
+    `,
+  },
 ];
 
 /**
