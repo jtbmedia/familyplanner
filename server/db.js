@@ -57,7 +57,7 @@ function init() {
     CREATE TABLE IF NOT EXISTS oauth_pending (
       state      TEXT    PRIMARY KEY,
       user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft')),
+      provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft', 'microsoft_shared')),
       expires_at INTEGER NOT NULL
     );
   `);
@@ -427,7 +427,7 @@ const MIGRATIONS = [
       CREATE TABLE IF NOT EXISTS oauth_pending (
         state      TEXT    PRIMARY KEY,
         user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft')),
+        provider   TEXT    NOT NULL CHECK(provider IN ('google', 'microsoft', 'microsoft_shared')),
         expires_at INTEGER NOT NULL
       );
     `,

@@ -21,7 +21,7 @@ const log = createLogger('Calendar');
 
 const router         = express.Router();
 
-const VALID_SOURCES = ['local', 'google', 'apple'];
+const VALID_SOURCES = ['local', 'google', 'apple', 'microsoft_shared'];
 
 // --------------------------------------------------------
 // RRULE-Expansion: alle Vorkommen eines wiederkehrenden Events
