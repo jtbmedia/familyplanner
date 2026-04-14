@@ -10,6 +10,7 @@ import express from 'express';
 import * as db from '../db.js';
 import * as googleCalendar from '../services/google-calendar.js';
 import * as appleCalendar from '../services/apple-calendar.js';
+import * as microsoftCalendar from '../services/microsoft-calendar.js';
 import { requireAdmin } from '../auth.js';
 import { str, color, datetime, rrule, collectErrors, MAX_TITLE, MAX_TEXT, DATE_RE, DATETIME_RE } from '../middleware/validate.js';
 import { nextOccurrence } from '../services/recurrence.js';
@@ -372,6 +373,71 @@ router.delete('/apple/disconnect', requireAdmin, (req, res) => {
   try {
     appleCalendar.clearCredentials();
     res.status(204).end();
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: 'Interner Fehler', code: 500 });
+  }
+});
+
+// --------------------------------------------------------
+// Microsoft Calendar Sync-Routen
+// --------------------------------------------------------
+
+/**
+ * GET /api/v1/calendar/microsoft/auth
+ * Admin only. Leidt naar Microsoft OAuth-consent-scherm.
+ */
+router.get('/microsoft/auth', requireAdmin, (req, res) => {
+  try {
+    if (!microsoftCalendar.isConfigured()) {
+      return res.status(503).json({ error: 'Microsoft nicht geconfigureerd (ontbrekende .env-variabelen).', code: 503 });
+    }
+    const url = microsoftCalendar.getAuthUrl(req.session);
+    res.redirect(url);
+  } catch (err) {
+    log.error('', err);
+    res.status(503).json({ error: err.message, code: 503 });
+  }
+});
+
+/**
+ * GET /api/v1/calendar/microsoft/status
+ * Response: { configured, connected, lastSync }
+ */
+router.get('/microsoft/status', (req, res) => {
+  try {
+    res.json(microsoftCalendar.getStatus());
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: 'Interner Fehler', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/calendar/microsoft/sync
+ * Admin only. Manuele sync trigger.
+ * Response: { ok: true, lastSync: string }
+ */
+router.post('/microsoft/sync', requireAdmin, async (req, res) => {
+  try {
+    await microsoftCalendar.sync();
+    const { lastSync } = microsoftCalendar.getStatus();
+    res.json({ ok: true, lastSync });
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: err.message, code: 500 });
+  }
+});
+
+/**
+ * DELETE /api/v1/calendar/microsoft/disconnect
+ * Admin only. Tokens verwijderen.
+ * Response: { ok: true }
+ */
+router.delete('/microsoft/disconnect', requireAdmin, (req, res) => {
+  try {
+    microsoftCalendar.disconnect();
+    res.json({ ok: true });
   } catch (err) {
     log.error('', err);
     res.status(500).json({ error: 'Interner Fehler', code: 500 });
