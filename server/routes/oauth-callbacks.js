@@ -12,6 +12,7 @@ import { createLogger } from '../logger.js';
 import * as db from '../db.js';
 import * as googlePersonal    from '../services/personal/google-personal.js';
 import * as microsoftPersonal from '../services/personal/microsoft-personal.js';
+import * as microsoftCalendar from '../services/microsoft-calendar.js';
 
 const log    = createLogger('OAuthCallbacks');
 const router = express.Router();
@@ -88,6 +89,38 @@ router.get('/microsoft/callback', async (req, res) => {
   } catch (err) {
     log.error('Microsoft OAuth callback mislukt', err);
     res.redirect('/settings?personal_sync_error=microsoft');
+  }
+});
+
+// ── GET /microsoft/shared/callback ───────────────────────────────────────────
+// Gedeelde Microsoft Calendar OAuth-callback. Geen sessie vereist.
+
+router.get('/microsoft/shared/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+
+  if (error) {
+    log.warn(`Microsoft Shared OAuth afgewezen: ${error}`);
+    return res.redirect('/settings?sync_error=microsoft');
+  }
+
+  const pending = consumeOAuthState(state);
+  if (!pending || pending.provider !== 'microsoft_shared') {
+    log.warn('Microsoft Shared OAuth: ongeldige of verlopen state');
+    return res.redirect('/settings?sync_error=microsoft');
+  }
+
+  if (!code) {
+    return res.redirect('/settings?sync_error=microsoft');
+  }
+
+  try {
+    await microsoftCalendar.handleCallback(code);
+    // Initiële sync in achtergrond starten (geen await)
+    microsoftCalendar.sync().catch((e) => log.error('Initiële sync mislukt:', e.message));
+    res.redirect('/settings?sync_ok=microsoft');
+  } catch (err) {
+    log.error('Microsoft Shared OAuth callback mislukt:', err);
+    res.redirect('/settings?sync_error=microsoft');
   }
 });
 
