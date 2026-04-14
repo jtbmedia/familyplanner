@@ -96,7 +96,11 @@ export async function handleCallback(code) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body:    body.toString(),
   });
-  if (!res.ok) throw new Error('[MicrosoftShared] OAuth callback mislukt: ' + await res.text());
+  if (!res.ok) {
+    const text = await res.text();
+    log.error('[MicrosoftShared] OAuth callback fout: ' + text);
+    throw new Error('[MicrosoftShared] OAuth callback mislukt — zie server logs.');
+  }
   const tokens = await res.json();
   if (!tokens.refresh_token) {
     throw new Error('[MicrosoftShared] Geen refresh token ontvangen — verbinding verbreken en opnieuw verbinden.');
@@ -128,7 +132,11 @@ async function ensureFreshToken() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body:    body.toString(),
   });
-  if (!res.ok) throw new Error('[MicrosoftShared] Token refresh mislukt: ' + await res.text());
+  if (!res.ok) {
+    const text = await res.text();
+    log.error('[MicrosoftShared] Token refresh fout: ' + text);
+    throw new Error('[MicrosoftShared] Token refresh mislukt — zie server logs.');
+  }
   const tokens = await res.json();
   cfgSet('microsoft_shared_access_token', tokens.access_token);
   if (tokens.refresh_token) cfgSet('microsoft_shared_refresh_token', tokens.refresh_token);
@@ -185,11 +193,14 @@ export async function sync() {
     `${GRAPH_BASE}/me/events/delta?$select=${SELECT}&$top=50`;
   let newDeltaLink = null;
 
+  let resyncAttempted = false;
+
   while (nextUrl) {
     const res = await graphFetch(nextUrl);
 
     if (res.status === 410) {
-      // Delta-link verlopen — volledige resync
+      if (resyncAttempted) throw new Error('[MicrosoftShared] Delta resync mislukt — 410 na resync.');
+      resyncAttempted = true;
       log.warn('Delta-link verlopen — volledige resync.');
       cfgDel('microsoft_shared_delta_link');
       nextUrl = `${GRAPH_BASE}/me/events/delta?$select=${SELECT}&$top=50`;
@@ -199,7 +210,8 @@ export async function sync() {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`[MicrosoftShared] Graph API fout ${res.status}: ${text}`);
+      log.error(`[MicrosoftShared] Graph API fout ${res.status}: ${text}`);
+      throw new Error(`[MicrosoftShared] Graph API fout ${res.status} — zie server logs.`);
     }
 
     const data = await res.json();
