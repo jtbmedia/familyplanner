@@ -238,7 +238,7 @@ async function renderForm(container, existing = null) {
     return `
       <div class="recipe-step-row" data-idx="${i}">
         <span class="recipe-step-num">${i + 1}.</span>
-        <textarea class="form-input" rows="2" data-field="instruction">${step.instruction || ''}</textarea>
+        <textarea class="form-input" rows="2" data-field="instruction">${esc(step.instruction || '')}</textarea>
         <button type="button" class="btn btn--ghost btn--icon remove-step-btn">✕</button>
       </div>`;
   }
