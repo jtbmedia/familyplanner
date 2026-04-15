@@ -220,9 +220,23 @@ router.post('/photo/:id', (req, res) => {
       return res.status(404).json({ error: 'Recept niet gevonden.', code: 404 });
     }
 
-    uploadRecipePhoto(req, res, (err) => {
+    uploadRecipePhoto(req, res, async (err) => {
       if (err) return res.status(400).json({ error: err.message, code: 400 });
       if (!req.file) return res.status(400).json({ error: 'Geen bestand ontvangen.', code: 400 });
+
+      // Magic bytes verificatie — voorkomt dat een kwaadwillende
+      // een niet-afbeelding uploadt met een valse Content-Type header
+      try {
+        const { fileTypeFromFile } = await import('file-type');
+        const detected = await fileTypeFromFile(req.file.path);
+        const allowed  = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!detected || !allowed.includes(detected.mime)) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ error: 'Ongeldig bestandstype. Alleen JPEG, PNG of WebP toegestaan.', code: 400 });
+        }
+      } catch (typeErr) {
+        // file-type niet beschikbaar → vertrouw op multer-filter als fallback
+      }
 
       try {
         const filePath = req.file.path;
