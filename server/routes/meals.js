@@ -557,7 +557,7 @@ router.post('/:id/to-shopping', (req, res) => {
     res.json({ ok: true, added, merged });
   } catch (err) {
     log.error('', err);
-    res.status(500).json({ error: 'Interne fout', code: 500 });
+    res.status(500).json({ error: 'Interner Fehler', code: 500 });
   }
 });
 
