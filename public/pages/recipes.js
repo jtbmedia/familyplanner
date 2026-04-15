@@ -468,5 +468,6 @@ async function renderForm(container, existing = null) {
 // ── Hoofd render-functie ──────────────────────────────────────────────────────
 
 export async function render(container) {
+  container.classList.add('recipes-page');
   await renderList(container);
 }
