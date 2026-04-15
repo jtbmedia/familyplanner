@@ -8,10 +8,17 @@ import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'recipes');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || '/data/uploads/recipes';
 
-// Zorg dat de map bestaat (ook als Docker volume leeg is)
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// Zorg dat de map bestaat (ook als Docker volume leeg is).
+// Geen crash bij EACCES — foto-upload werkt dan niet, maar de server start wel op.
+try {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+} catch (err) {
+  if (err.code !== 'EEXIST') {
+    console.warn(`[upload] Kon uploadmap niet aanmaken: ${UPLOAD_DIR} — ${err.message}`);
+  }
+}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
