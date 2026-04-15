@@ -48,7 +48,7 @@ export async function render(container, { user }) {
   let googleStatus    = { configured: false, connected: false, lastSync: null };
   let appleStatus     = { configured: false, lastSync: null };
   let microsoftStatus = { configured: false, connected: false, lastSync: null };
-  let prefs           = { visible_meal_types: ['breakfast', 'lunch', 'dinner', 'snack'], currency: 'EUR' };
+  let prefs           = { visible_meal_types: ['breakfast', 'lunch', 'dinner', 'snack'], currency: 'EUR', recipes_enabled: true };
   let categories      = [];
   let personalStatus  = { google: null, apple: null };
   let personalCals    = [];
@@ -182,6 +182,21 @@ export async function render(container, { user }) {
             </div>
           </div>
         </section>
+
+        ${user?.role === 'admin' ? `
+        <section class="settings-section">
+          <h2 class="settings-section__title">${t('settings.modulesSection')}</h2>
+          <div class="settings-card">
+            <div class="settings-preference-row">
+              <label class="settings-preference-label" for="recipes-enabled-toggle">
+                ${t('settings.recipesEnabled')}
+              </label>
+              <input type="checkbox" id="recipes-enabled-toggle" class="settings-toggle"
+                ${prefs.recipes_enabled ? 'checked' : ''} />
+            </div>
+          </div>
+        </section>
+        ` : ''}
       </div>
 
       <!-- Panel: Budget -->
@@ -698,6 +713,21 @@ function bindEvents(container, user, categories) {
         window.oikos?.showToast(t('settings.currencySaved'), 'success');
       } catch (err) {
         window.oikos?.showToast(err.message ?? t('common.errorGeneric'), 'danger');
+      }
+    });
+  }
+
+  // Recepten-module toggle (Admin)
+  const recipesToggle = container.querySelector('#recipes-enabled-toggle');
+  if (recipesToggle) {
+    recipesToggle.addEventListener('change', async () => {
+      try {
+        await api.put('/preferences', { recipes_enabled: recipesToggle.checked ? 'true' : 'false' });
+        document.querySelector('[data-nav="recipes"]')?.classList.toggle('hidden', !recipesToggle.checked);
+        window.oikos?.showToast(t('settings.mealTypesSaved'), 'success');
+      } catch (err) {
+        window.oikos?.showToast(err.message ?? t('common.errorGeneric'), 'danger');
+        recipesToggle.checked = !recipesToggle.checked;
       }
     });
   }

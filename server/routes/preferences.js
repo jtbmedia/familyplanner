@@ -47,11 +47,13 @@ router.get('/', (req, res) => {
     const raw = cfgGet('visible_meal_types') ?? DEFAULT_MEAL_TYPES;
     const visibleMealTypes = raw.split(',').filter((t) => VALID_MEAL_TYPES.includes(t));
     const currency = cfgGet('currency') ?? DEFAULT_CURRENCY;
+    const recipesEnabled = (cfgGet('recipes_enabled') ?? 'true') !== 'false';
 
     res.json({
       data: {
         visible_meal_types: visibleMealTypes,
         currency,
+        recipes_enabled: recipesEnabled,
       },
     });
   } catch (err) {
@@ -69,7 +71,7 @@ router.get('/', (req, res) => {
 
 router.put('/', (req, res) => {
   try {
-    const { visible_meal_types, currency } = req.body;
+    const { visible_meal_types, currency, recipes_enabled } = req.body;
 
     if (visible_meal_types !== undefined) {
       if (!Array.isArray(visible_meal_types)) {
@@ -89,14 +91,20 @@ router.put('/', (req, res) => {
       cfgSet('currency', currency);
     }
 
+    if (recipes_enabled !== undefined) {
+      cfgSet('recipes_enabled', recipes_enabled === 'true' || recipes_enabled === true ? 'true' : 'false');
+    }
+
     const rawMealTypes = cfgGet('visible_meal_types') ?? DEFAULT_MEAL_TYPES;
     const savedMealTypes = rawMealTypes.split(',').filter((t) => VALID_MEAL_TYPES.includes(t));
     const savedCurrency = cfgGet('currency') ?? DEFAULT_CURRENCY;
+    const savedRecipesEnabled = (cfgGet('recipes_enabled') ?? 'true') !== 'false';
 
     res.json({
       data: {
         visible_meal_types: savedMealTypes,
         currency: savedCurrency,
+        recipes_enabled: savedRecipesEnabled,
       },
     });
   } catch (err) {
