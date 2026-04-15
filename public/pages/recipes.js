@@ -131,30 +131,32 @@ async function renderDetail(container, id) {
       </div>
     </div>
 
-    ${photo ? `<img class="recipe-detail__photo" src="${photo}" alt="${esc(recipe.title)}" />` : ''}
+    <div class="recipe-detail-content">
+      ${photo ? `<img class="recipe-detail__photo" src="${photo}" alt="${esc(recipe.title)}" />` : ''}
 
-    <h2 class="recipe-detail__title">${esc(recipe.title)}</h2>
-    ${recipe.description ? `<p class="recipe-detail__desc">${esc(recipe.description)}</p>` : ''}
+      <h2 class="recipe-detail__title">${esc(recipe.title)}</h2>
+      ${recipe.description ? `<p class="recipe-detail__desc">${esc(recipe.description)}</p>` : ''}
 
-    <div class="recipe-detail__meta">
-      <span class="recipe-detail__servings">${t('recipes.forPersons', { n: recipe.servings })}</span>
-      ${recipe.source_url ? `<a href="${encodeURI(recipe.source_url)}" target="_blank" rel="noopener" class="recipe-detail__source">${t('recipes.source')}</a>` : ''}
-      <div class="recipe-detail__tags">${tagChips(recipe.tags)}</div>
+      <div class="recipe-detail__meta">
+        <span class="recipe-detail__servings">${t('recipes.forPersons', { n: recipe.servings })}</span>
+        ${recipe.source_url ? `<a href="${encodeURI(recipe.source_url)}" target="_blank" rel="noopener" class="recipe-detail__source">${t('recipes.source')}</a>` : ''}
+        <div class="recipe-detail__tags">${tagChips(recipe.tags)}</div>
+      </div>
+
+      <button class="btn btn--primary" id="to-meal-plan-btn">${t('recipes.addToMealPlan')}</button>
+
+      <h3 class="recipe-section-title">${t('recipes.ingredients')}</h3>
+      <ul class="recipe-detail__ingredients">
+        ${(recipe.ingredients || []).map((ing) => `
+          <li>${ing.quantity != null ? `<strong>${esc(String(ing.quantity))}</strong> ` : ''}${esc(ing.unit || '')}${ing.unit ? ' ' : ''}${esc(ing.name)}</li>
+        `).join('')}
+      </ul>
+
+      <h3 class="recipe-section-title">${t('recipes.steps')}</h3>
+      <ol class="recipe-detail__steps">
+        ${(recipe.steps || []).map((s) => `<li>${esc(s.instruction)}</li>`).join('')}
+      </ol>
     </div>
-
-    <button class="btn btn--primary" id="to-meal-plan-btn">${t('recipes.addToMealPlan')}</button>
-
-    <h3 class="recipe-section-title">${t('recipes.ingredients')}</h3>
-    <ul class="recipe-detail__ingredients">
-      ${(recipe.ingredients || []).map((ing) => `
-        <li>${ing.quantity != null ? `<strong>${esc(String(ing.quantity))}</strong> ` : ''}${esc(ing.unit || '')}${ing.unit ? ' ' : ''}${esc(ing.name)}</li>
-      `).join('')}
-    </ul>
-
-    <h3 class="recipe-section-title">${t('recipes.steps')}</h3>
-    <ol class="recipe-detail__steps">
-      ${(recipe.steps || []).map((s) => `<li>${esc(s.instruction)}</li>`).join('')}
-    </ol>
   `;
 
   container.querySelector('#back-btn')?.addEventListener('click', () => renderList(container));
@@ -259,77 +261,79 @@ async function renderForm(container, existing = null) {
       <h2>${isEdit ? t('recipes.edit') : t('recipes.add')}</h2>
     </div>
 
-    <div class="settings-tabs" role="tablist">
-      <button class="settings-tab settings-tab--active" data-tab="manual">${t('recipes.manualTab')}</button>
-      <button class="settings-tab" data-tab="import">${t('recipes.importTab')}</button>
-    </div>
+    <div class="recipe-form-content">
+      <div class="settings-tabs" role="tablist">
+        <button class="settings-tab-btn settings-tab-btn--active" data-tab="manual">${t('recipes.manualTab')}</button>
+        <button class="settings-tab-btn" data-tab="import">${t('recipes.importTab')}</button>
+      </div>
 
-    <div id="tab-import" class="tab-panel" hidden>
-      <div class="form-group">
-        <label class="form-label">${t('recipes.importUrl')}</label>
-        <div class="input-with-btn">
-          <input class="form-input" type="url" id="scrape-url" placeholder="https://..." />
-          <button class="btn btn--secondary" id="scrape-btn">${t('recipes.importBtn')}</button>
+      <div id="tab-import" class="tab-panel" hidden>
+        <div class="form-group">
+          <label class="form-label">${t('recipes.importUrl')}</label>
+          <div class="input-with-btn">
+            <input class="form-input" type="url" id="scrape-url" placeholder="https://..." />
+            <button class="btn btn--secondary" id="scrape-btn">${t('recipes.importBtn')}</button>
+          </div>
+          <span id="scrape-error" class="form-error" hidden></span>
         </div>
-        <span id="scrape-error" class="form-error" hidden></span>
       </div>
+
+      <form id="recipe-form">
+        <div class="form-group">
+          <label class="form-label">Titel *</label>
+          <input class="form-input" type="text" id="recipe-title" value="${esc(existing?.title || '')}" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Beschrijving</label>
+          <textarea class="form-input" id="recipe-desc" rows="3">${esc(existing?.description || '')}</textarea>
+        </div>
+        <div class="form-group" style="max-width:120px">
+          <label class="form-label">${t('recipes.servings')} *</label>
+          <input class="form-input" type="number" id="recipe-servings" value="${existing?.servings || 4}" min="1" max="100" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('recipes.tags')}</label>
+          <input class="form-input" type="text" id="recipe-tags" value="${esc(existing?.tags || '')}" placeholder="pasta, vegetarisch, snel" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('recipes.source')}</label>
+          <input class="form-input" type="url" id="recipe-source" value="${esc(existing?.source_url || '')}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">${t('recipes.uploadPhoto')}</label>
+          <input type="file" id="recipe-photo-file" accept="image/jpeg,image/png,image/webp" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('recipes.photoUrl')}</label>
+          <input class="form-input" type="url" id="recipe-photo-url" value="${esc(existing?.photo_url || '')}" />
+        </div>
+
+        <h3 class="recipe-section-title">${t('recipes.ingredients')}</h3>
+        <div id="ingredients-list">
+          ${ingredients.map((ing, i) => ingredientRow(ing, i)).join('')}
+        </div>
+        <button type="button" class="btn btn--ghost" id="add-ingredient-btn">+ ${t('recipes.addIngredient')}</button>
+
+        <h3 class="recipe-section-title">${t('recipes.steps')}</h3>
+        <div id="steps-list">
+          ${steps.map((s, i) => stepRow(s, i)).join('')}
+        </div>
+        <button type="button" class="btn btn--ghost" id="add-step-btn">+ ${t('recipes.addStep')}</button>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">${isEdit ? t('recipes.edit') : t('recipes.add')}</button>
+          <button type="button" class="btn btn--ghost" id="cancel-btn">Annuleren</button>
+        </div>
+      </form>
     </div>
-
-    <form id="recipe-form">
-      <div class="form-group">
-        <label class="form-label">Titel *</label>
-        <input class="form-input" type="text" id="recipe-title" value="${esc(existing?.title || '')}" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Beschrijving</label>
-        <textarea class="form-input" id="recipe-desc" rows="3">${esc(existing?.description || '')}</textarea>
-      </div>
-      <div class="form-group" style="max-width:120px">
-        <label class="form-label">${t('recipes.servings')} *</label>
-        <input class="form-input" type="number" id="recipe-servings" value="${existing?.servings || 4}" min="1" max="100" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('recipes.tags')}</label>
-        <input class="form-input" type="text" id="recipe-tags" value="${esc(existing?.tags || '')}" placeholder="pasta, vegetarisch, snel" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('recipes.source')}</label>
-        <input class="form-input" type="url" id="recipe-source" value="${esc(existing?.source_url || '')}" />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">${t('recipes.uploadPhoto')}</label>
-        <input type="file" id="recipe-photo-file" accept="image/jpeg,image/png,image/webp" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('recipes.photoUrl')}</label>
-        <input class="form-input" type="url" id="recipe-photo-url" value="${esc(existing?.photo_url || '')}" />
-      </div>
-
-      <h3>${t('recipes.ingredients')}</h3>
-      <div id="ingredients-list">
-        ${ingredients.map((ing, i) => ingredientRow(ing, i)).join('')}
-      </div>
-      <button type="button" class="btn btn--ghost" id="add-ingredient-btn">+ ${t('recipes.addIngredient')}</button>
-
-      <h3>${t('recipes.steps')}</h3>
-      <div id="steps-list">
-        ${steps.map((s, i) => stepRow(s, i)).join('')}
-      </div>
-      <button type="button" class="btn btn--ghost" id="add-step-btn">+ ${t('recipes.addStep')}</button>
-
-      <div class="form-actions">
-        <button type="submit" class="btn btn--primary">${isEdit ? t('recipes.edit') : t('recipes.add')}</button>
-        <button type="button" class="btn btn--ghost" id="cancel-btn">Annuleren</button>
-      </div>
-    </form>
   `;
 
   // Tab switching
-  container.querySelectorAll('.settings-tab').forEach((tab) => {
+  container.querySelectorAll('.settings-tab-btn').forEach((tab) => {
     tab.addEventListener('click', () => {
-      container.querySelectorAll('.settings-tab').forEach((tb) => tb.classList.remove('settings-tab--active'));
-      tab.classList.add('settings-tab--active');
+      container.querySelectorAll('.settings-tab-btn').forEach((tb) => tb.classList.remove('settings-tab-btn--active'));
+      tab.classList.add('settings-tab-btn--active');
       container.querySelector('#tab-import').hidden = tab.dataset.tab !== 'import';
     });
   });
