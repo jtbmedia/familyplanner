@@ -104,12 +104,14 @@ router.get('/', (req, res) => {
     const params = [];
 
     if (req.query.tag) {
-      sql += ` WHERE (',' || r.tags || ',') LIKE ?`;
-      params.push(`%,${req.query.tag.trim()},%`);
+      const tag = req.query.tag.trim().replace(/[%_]/g, '\\$&');
+      sql += ` WHERE (',' || r.tags || ',') LIKE ? ESCAPE '\\'`;
+      params.push(`%,${tag},%`);
     } else if (req.query.q) {
-      sql += ` WHERE (r.title LIKE ? OR r.tags LIKE ?)`;
-      const q = `%${req.query.q.trim()}%`;
-      params.push(q, q);
+      const q = req.query.q.trim().replace(/[%_]/g, '\\$&');
+      const qParam = `%${q}%`;
+      sql += ` WHERE (r.title LIKE ? ESCAPE '\\' OR r.tags LIKE ? ESCAPE '\\')`;
+      params.push(qParam, qParam);
     }
 
     sql += ` ORDER BY r.created_at DESC`;
@@ -212,29 +214,39 @@ router.delete('/:id', (req, res) => {
 // ── POST /photo/:id ───────────────────────────────────────────────────────────
 
 router.post('/photo/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (!db.get().prepare('SELECT id FROM recipes WHERE id = ?').get(id)) {
-    return res.status(404).json({ error: 'Recept niet gevonden.', code: 404 });
-  }
-
-  uploadRecipePhoto(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.message, code: 400 });
-    if (!req.file) return res.status(400).json({ error: 'Geen bestand ontvangen.', code: 400 });
-
-    const filePath = req.file.path;
-    const publicPath = `/uploads/recipes/${req.file.filename}`;
-
-    const old = db.get().prepare('SELECT photo_path FROM recipes WHERE id = ?').get(id);
-    if (old?.photo_path) {
-      try { fs.unlinkSync(old.photo_path); } catch { /* al weg */ }
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!db.get().prepare('SELECT id FROM recipes WHERE id = ?').get(id)) {
+      return res.status(404).json({ error: 'Recept niet gevonden.', code: 404 });
     }
 
-    db.get().prepare(
-      `UPDATE recipes SET photo_path = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
-    ).run(filePath, id);
+    uploadRecipePhoto(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.message, code: 400 });
+      if (!req.file) return res.status(400).json({ error: 'Geen bestand ontvangen.', code: 400 });
 
-    res.json({ ok: true, path: publicPath });
-  });
+      try {
+        const filePath = req.file.path;
+        const publicPath = `/uploads/recipes/${req.file.filename}`;
+
+        const old = db.get().prepare('SELECT photo_path FROM recipes WHERE id = ?').get(id);
+        if (old?.photo_path) {
+          try { fs.unlinkSync(old.photo_path); } catch { /* al weg */ }
+        }
+
+        db.get().prepare(
+          `UPDATE recipes SET photo_path = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
+        ).run(filePath, id);
+
+        res.json({ ok: true, path: publicPath });
+      } catch (dbErr) {
+        log.error('Fout bij opslaan foto', dbErr);
+        res.status(500).json({ error: 'Interne fout bij opslaan foto.', code: 500 });
+      }
+    });
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: 'Interne fout', code: 500 });
+  }
 });
 
 // ── POST /scrape ──────────────────────────────────────────────────────────────
