@@ -595,7 +595,7 @@
     "invalidCredentials": "Ongeldige inloggegevens."
   },
   "install": {
-    "title": "Oikos installeren",
+    "title": "ThuisBasis installeren",
     "subtitle": "Toevoegen aan app",
     "iosTip1": "Tik op ",
     "iosTip2": " → \"Zet op beginscherm\"",

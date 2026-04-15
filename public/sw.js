@@ -12,9 +12,9 @@
  *   API: Immer Netzwerk (kein Caching von Nutzerdaten)
  */
 
-const SHELL_CACHE   = 'oikos-shell-v28';
-const PAGES_CACHE   = 'oikos-pages-v27';
-const ASSETS_CACHE  = 'oikos-assets-v27';
+const SHELL_CACHE   = 'thuisbasis-shell-v29';
+const PAGES_CACHE   = 'thuisbasis-pages-v28';
+const ASSETS_CACHE  = 'thuisbasis-assets-v28';
 const ALL_CACHES    = [SHELL_CACHE, PAGES_CACHE, ASSETS_CACHE];
 
 // App-Shell: sofort benötigt für ersten Render
@@ -42,8 +42,9 @@ const APP_SHELL = [
   '/styles/notes.css',
   '/styles/contacts.css',
   '/styles/budget.css',
+  '/styles/recipes.css',
   '/styles/settings.css',
-  '/components/oikos-install-prompt.js',
+  '/components/thuisbasis-install-prompt.js',
   '/offline.html',
   '/manifest.json',
   '/favicon.ico',
