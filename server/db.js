@@ -485,6 +485,8 @@ const MIGRATIONS = [
 
       CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe ON recipe_ingredients(recipe_id);
       CREATE INDEX IF NOT EXISTS idx_recipe_steps_recipe ON recipe_steps(recipe_id);
+      CREATE INDEX IF NOT EXISTS idx_meals_recipe_id ON meals(recipe_id);
+      CREATE INDEX IF NOT EXISTS idx_recipes_created_by ON recipes(created_by);
     `,
   },
 ];
