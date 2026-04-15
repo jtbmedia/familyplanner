@@ -96,9 +96,11 @@ export async function scrape(url) {
     throw new Error('Alleen HTTP(S) URLs zijn toegestaan.');
   }
   const host = urlObj.hostname.toLowerCase();
-  if (host === 'localhost' || /^127\./.test(host) || /^10\./.test(host) ||
+  if (host === 'localhost' || host === '0.0.0.0' ||
+      /^127\./.test(host) || /^10\./.test(host) ||
+      /^169\.254\./.test(host) ||
       /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
-      host === '::1' || host.endsWith('.local')) {
+      host === '::1' || /^fe80:/i.test(host) || host.endsWith('.local')) {
     throw new Error('Interne URLs zijn niet toegestaan.');
   }
 

@@ -40,6 +40,8 @@ async function renderList(container) {
     render();
   }
 
+  let searchDebounce = null;
+
   function render() {
     const allTags = [...new Set(
       recipes.flatMap((r) => (r.tags || '').split(',').map((tg) => tg.trim()).filter(Boolean))
@@ -82,9 +84,12 @@ async function renderList(container) {
 
     container.querySelector('#add-recipe-btn')?.addEventListener('click', () => renderForm(container));
     container.querySelector('#recipe-search')?.addEventListener('input', (e) => {
-      searchQ   = e.target.value.trim();
-      activeTag = '';
-      load();
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        searchQ   = e.target.value.trim();
+        activeTag = '';
+        load();
+      }, 300);
     });
     container.querySelectorAll('#tag-filter [data-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
