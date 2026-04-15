@@ -6,6 +6,7 @@
 import { api }          from '/api.js';
 import { t }            from '/i18n.js';
 import { confirmModal } from '/components/modal.js';
+import { esc }          from '/utils/html.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -18,7 +19,7 @@ function photoSrc(recipe) {
 function tagChips(tags) {
   if (!tags) return '';
   return tags.split(',').map((tag) => tag.trim()).filter(Boolean)
-    .map((tag) => `<span class="recipe-tag">${tag}</span>`).join('');
+    .map((tag) => `<span class="recipe-tag">${esc(tag)}</span>`).join('');
 }
 
 // ── Overzichtsweergave ────────────────────────────────────────────────────────
@@ -67,9 +68,9 @@ async function renderList(container) {
             const photo = photoSrc(r);
             return `
               <div class="recipe-card" data-id="${r.id}">
-                ${photo ? `<img class="recipe-card__photo" src="${photo}" alt="${r.title}" loading="lazy" />` : '<div class="recipe-card__photo recipe-card__photo--placeholder"></div>'}
+                ${photo ? `<img class="recipe-card__photo" src="${photo}" alt="${esc(r.title)}" loading="lazy" />` : '<div class="recipe-card__photo recipe-card__photo--placeholder"></div>'}
                 <div class="recipe-card__body">
-                  <div class="recipe-card__title">${r.title}</div>
+                  <div class="recipe-card__title">${esc(r.title)}</div>
                   <div class="recipe-card__meta">${t('recipes.forPersons', { n: r.servings })}</div>
                   <div class="recipe-card__tags">${tagChips(r.tags)}</div>
                 </div>
@@ -123,14 +124,14 @@ async function renderDetail(container, id) {
       </div>
     </div>
 
-    ${photo ? `<img class="recipe-detail__photo" src="${photo}" alt="${recipe.title}" />` : ''}
+    ${photo ? `<img class="recipe-detail__photo" src="${photo}" alt="${esc(recipe.title)}" />` : ''}
 
-    <h2 class="recipe-detail__title">${recipe.title}</h2>
-    ${recipe.description ? `<p class="recipe-detail__desc">${recipe.description}</p>` : ''}
+    <h2 class="recipe-detail__title">${esc(recipe.title)}</h2>
+    ${recipe.description ? `<p class="recipe-detail__desc">${esc(recipe.description)}</p>` : ''}
 
     <div class="recipe-detail__meta">
       <span class="recipe-detail__servings">${t('recipes.forPersons', { n: recipe.servings })}</span>
-      ${recipe.source_url ? `<a href="${recipe.source_url}" target="_blank" rel="noopener" class="recipe-detail__source">${t('recipes.source')}</a>` : ''}
+      ${recipe.source_url ? `<a href="${encodeURI(recipe.source_url)}" target="_blank" rel="noopener" class="recipe-detail__source">${t('recipes.source')}</a>` : ''}
       <div class="recipe-detail__tags">${tagChips(recipe.tags)}</div>
     </div>
 
@@ -138,14 +139,14 @@ async function renderDetail(container, id) {
 
     <h3>${t('recipes.ingredients')}</h3>
     <ul class="recipe-detail__ingredients">
-      ${recipe.ingredients.map((ing) => `
-        <li>${ing.quantity != null ? ing.quantity : ''} ${ing.unit || ''} ${ing.name}</li>
+      ${(recipe.ingredients || []).map((ing) => `
+        <li>${ing.quantity != null ? esc(String(ing.quantity)) : ''} ${esc(ing.unit || '')} ${esc(ing.name)}</li>
       `).join('')}
     </ul>
 
     <h3>${t('recipes.steps')}</h3>
     <ol class="recipe-detail__steps">
-      ${recipe.steps.map((s) => `<li>${s.instruction}</li>`).join('')}
+      ${(recipe.steps || []).map((s) => `<li>${esc(s.instruction)}</li>`).join('')}
     </ol>
   `;
 
@@ -226,9 +227,9 @@ async function renderForm(container, existing = null) {
   function ingredientRow(ing = {}, i = 0) {
     return `
       <div class="recipe-ingredient-row" data-idx="${i}">
-        <input class="form-input" type="text" placeholder="${t('recipes.ingredients')}" value="${ing.name || ''}" data-field="name" />
+        <input class="form-input" type="text" placeholder="${t('recipes.ingredients')}" value="${esc(ing.name || '')}" data-field="name" />
         <input class="form-input" type="number" placeholder="Hoeveelheid" value="${ing.quantity ?? ''}" step="0.1" min="0" data-field="quantity" style="width:90px" />
-        <input class="form-input" type="text" placeholder="Eenheid" value="${ing.unit || ''}" data-field="unit" style="width:80px" />
+        <input class="form-input" type="text" placeholder="Eenheid" value="${esc(ing.unit || '')}" data-field="unit" style="width:80px" />
         <button type="button" class="btn btn--ghost btn--icon remove-ingredient-btn">✕</button>
       </div>`;
   }
@@ -270,11 +271,11 @@ async function renderForm(container, existing = null) {
     <form id="recipe-form">
       <div class="form-group">
         <label class="form-label">Titel *</label>
-        <input class="form-input" type="text" id="recipe-title" value="${existing?.title || ''}" required />
+        <input class="form-input" type="text" id="recipe-title" value="${esc(existing?.title || '')}" required />
       </div>
       <div class="form-group">
         <label class="form-label">Beschrijving</label>
-        <textarea class="form-input" id="recipe-desc" rows="3">${existing?.description || ''}</textarea>
+        <textarea class="form-input" id="recipe-desc" rows="3">${esc(existing?.description || '')}</textarea>
       </div>
       <div class="form-group" style="max-width:120px">
         <label class="form-label">${t('recipes.servings')} *</label>
@@ -282,11 +283,11 @@ async function renderForm(container, existing = null) {
       </div>
       <div class="form-group">
         <label class="form-label">${t('recipes.tags')}</label>
-        <input class="form-input" type="text" id="recipe-tags" value="${existing?.tags || ''}" placeholder="pasta, vegetarisch, snel" />
+        <input class="form-input" type="text" id="recipe-tags" value="${esc(existing?.tags || '')}" placeholder="pasta, vegetarisch, snel" />
       </div>
       <div class="form-group">
         <label class="form-label">${t('recipes.source')}</label>
-        <input class="form-input" type="url" id="recipe-source" value="${existing?.source_url || ''}" />
+        <input class="form-input" type="url" id="recipe-source" value="${esc(existing?.source_url || '')}" />
       </div>
 
       ${isEdit ? `
@@ -297,7 +298,7 @@ async function renderForm(container, existing = null) {
       ` : ''}
       <div class="form-group">
         <label class="form-label">${t('recipes.photoUrl')}</label>
-        <input class="form-input" type="url" id="recipe-photo-url" value="${existing?.photo_url || ''}" />
+        <input class="form-input" type="url" id="recipe-photo-url" value="${esc(existing?.photo_url || '')}" />
       </div>
 
       <h3>${t('recipes.ingredients')}</h3>
