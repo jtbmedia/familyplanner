@@ -9,6 +9,10 @@
  * -------------------------------------------------------- */
 .calendar-page { --module-accent: var(--module-calendar); }
 
+.calendar-page .card {
+  background-color: color-mix(in srgb, var(--module-calendar) 8%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
  * Seiten-Layout
  * -------------------------------------------------------- */

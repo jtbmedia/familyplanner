@@ -11,6 +11,10 @@
   --module-accent: var(--module-dashboard);
 }
 
+.dashboard .card {
+  background-color: color-mix(in srgb, var(--module-dashboard) 6%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
  * Dashboard-Layout
  * -------------------------------------------------------- */

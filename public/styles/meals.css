@@ -9,6 +9,10 @@
  * -------------------------------------------------------- */
 .meals-page { --module-accent: var(--module-meals); }
 
+.meals-page .card {
+  background-color: color-mix(in srgb, var(--module-meals) 8%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
  * Seiten-Layout
  * -------------------------------------------------------- */
