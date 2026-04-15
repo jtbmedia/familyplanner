@@ -13,6 +13,15 @@
   background-color: color-mix(in srgb, var(--module-notes) 8%, var(--color-surface));
 }
 
+.notes-page {
+  border-top: 4px solid var(--module-notes);
+}
+
+.notes-page .form-input:focus {
+  border-color: var(--module-notes);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--module-notes) 15%, transparent);
+}
+
 /* --------------------------------------------------------
  * Seiten-Layout
  * -------------------------------------------------------- */

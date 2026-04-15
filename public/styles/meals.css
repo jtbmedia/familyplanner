@@ -13,6 +13,15 @@
   background-color: color-mix(in srgb, var(--module-meals) 8%, var(--color-surface));
 }
 
+.meals-page {
+  border-top: 4px solid var(--module-meals);
+}
+
+.meals-page .form-input:focus {
+  border-color: var(--module-meals);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--module-meals) 15%, transparent);
+}
+
 /* --------------------------------------------------------
  * Seiten-Layout
  * -------------------------------------------------------- */

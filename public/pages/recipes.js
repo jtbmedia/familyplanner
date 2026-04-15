@@ -70,10 +70,12 @@ async function renderList(container) {
             const photo = photoSrc(r);
             return `
               <div class="recipe-card" data-id="${r.id}">
-                ${photo ? `<img class="recipe-card__photo" src="${photo}" alt="${esc(r.title)}" loading="lazy" />` : '<div class="recipe-card__photo recipe-card__photo--placeholder"></div>'}
+                <div class="recipe-card__photo-wrap">
+                  ${photo ? `<img class="recipe-card__photo" src="${photo}" alt="${esc(r.title)}" loading="lazy" />` : '<div class="recipe-card__photo recipe-card__photo--placeholder"></div>'}
+                </div>
                 <div class="recipe-card__body">
                   <div class="recipe-card__title">${esc(r.title)}</div>
-                  <div class="recipe-card__meta">${t('recipes.forPersons', { n: r.servings })}</div>
+                  ${r.servings ? `<div class="recipe-card__meta">${t('recipes.forPersons', { n: r.servings })}</div>` : ''}
                   <div class="recipe-card__tags">${tagChips(r.tags)}</div>
                 </div>
               </div>`;
@@ -142,14 +144,14 @@ async function renderDetail(container, id) {
 
     <button class="btn btn--primary" id="to-meal-plan-btn">${t('recipes.addToMealPlan')}</button>
 
-    <h3>${t('recipes.ingredients')}</h3>
+    <h3 class="recipe-section-title">${t('recipes.ingredients')}</h3>
     <ul class="recipe-detail__ingredients">
       ${(recipe.ingredients || []).map((ing) => `
-        <li>${ing.quantity != null ? esc(String(ing.quantity)) : ''} ${esc(ing.unit || '')} ${esc(ing.name)}</li>
+        <li>${ing.quantity != null ? `<strong>${esc(String(ing.quantity))}</strong> ` : ''}${esc(ing.unit || '')}${ing.unit ? ' ' : ''}${esc(ing.name)}</li>
       `).join('')}
     </ul>
 
-    <h3>${t('recipes.steps')}</h3>
+    <h3 class="recipe-section-title">${t('recipes.steps')}</h3>
     <ol class="recipe-detail__steps">
       ${(recipe.steps || []).map((s) => `<li>${esc(s.instruction)}</li>`).join('')}
     </ol>

@@ -9,10 +9,16 @@
  * -------------------------------------------------------- */
 .dashboard {
   --module-accent: var(--module-dashboard);
+  border-top: 4px solid var(--module-dashboard);
 }
 
 .dashboard .card {
   background-color: color-mix(in srgb, var(--module-dashboard) 6%, var(--color-surface));
+}
+
+.dashboard .form-input:focus {
+  border-color: var(--module-dashboard);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--module-dashboard) 15%, transparent);
 }
 
 /* --------------------------------------------------------
