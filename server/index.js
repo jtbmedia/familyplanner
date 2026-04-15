@@ -109,6 +109,11 @@ app.use('/api/', (req, res, next) => {
 });
 
 // --------------------------------------------------------
+// Geüploade recept-foto's
+// --------------------------------------------------------
+app.use('/uploads/recipes', express.static(process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'recipes')));
+
+// --------------------------------------------------------
 // Statische Dateien (Frontend) - differenzierte Caching-Strategie
 //
 // HTML + JS + CSS: no-cache (Browser revalidiert via ETag/304, kein stale Content
