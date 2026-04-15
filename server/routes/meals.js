@@ -160,11 +160,20 @@ router.post('/', (req, res) => {
     if (!req.body.meal_type) errors.push('Mahlzeit-Typ ist erforderlich.');
     if (errors.length) return res.status(400).json({ error: errors.join(' '), code: 400 });
 
+    const recipeId = req.body.recipe_id != null ? parseInt(req.body.recipe_id, 10) : null;
+    if (recipeId !== null && (!Number.isInteger(recipeId) || recipeId <= 0)) {
+      return res.status(400).json({ error: 'recipe_id: ongeldig ID.', code: 400 });
+    }
+    if (recipeId !== null) {
+      const exists = db.get().prepare('SELECT id FROM recipes WHERE id = ?').get(recipeId);
+      if (!exists) return res.status(400).json({ error: 'recipe_id: recept niet gevonden.', code: 400 });
+    }
+
     const meal = db.transaction(() => {
       const result = db.get().prepare(`
-        INSERT INTO meals (date, meal_type, title, notes, recipe_url, created_by)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(vDate.value, vType.value, vTitle.value, vNotes.value, vRecipeUrl.value, req.session.userId);
+        INSERT INTO meals (date, meal_type, title, notes, recipe_url, recipe_id, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(vDate.value, vType.value, vTitle.value, vNotes.value, vRecipeUrl.value, recipeId, req.session.userId);
 
       const mealId = result.lastInsertRowid;
 
@@ -219,13 +228,18 @@ router.put('/:id', (req, res) => {
     const errors = collectErrors(checks);
     if (errors.length) return res.status(400).json({ error: errors.join(' '), code: 400 });
 
+    const newRecipeId = req.body.recipe_id !== undefined
+      ? (req.body.recipe_id != null ? parseInt(req.body.recipe_id, 10) : null)
+      : undefined;
+
     db.get().prepare(`
       UPDATE meals
       SET date       = COALESCE(?, date),
           meal_type  = COALESCE(?, meal_type),
           title      = COALESCE(?, title),
           notes      = ?,
-          recipe_url = ?
+          recipe_url = ?,
+          recipe_id  = ?
       WHERE id = ?
     `).run(
       req.body.date      ?? null,
@@ -233,6 +247,7 @@ router.put('/:id', (req, res) => {
       req.body.title?.trim() ?? null,
       req.body.notes       !== undefined ? (req.body.notes || null)       : meal.notes,
       req.body.recipe_url  !== undefined ? (req.body.recipe_url || null)  : meal.recipe_url,
+      newRecipeId !== undefined ? newRecipeId : meal.recipe_id,
       id
     );
 
@@ -471,6 +486,78 @@ router.post('/week-to-shopping-list', (req, res) => {
   } catch (err) {
     log.error('POST /week-to-shopping-list', err);
     res.status(500).json({ error: 'Interner Fehler', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/meals/:id/to-shopping
+ * Voegt ingrediënten van het gekoppelde recept toe aan een boodschappenlijst.
+ * Body: { list_id: number, servings: number }
+ * Response: { ok: true, added: number, merged: number }
+ */
+router.post('/:id/to-shopping', (req, res) => {
+  try {
+    const mealId = parseInt(req.params.id, 10);
+    const meal   = db.get().prepare('SELECT * FROM meals WHERE id = ?').get(mealId);
+    if (!meal) return res.status(404).json({ error: 'Maaltijd niet gevonden.', code: 404 });
+    if (!meal.recipe_id) return res.status(400).json({ error: 'Deze maaltijd heeft geen gekoppeld recept.', code: 400 });
+
+    const listId   = parseInt(req.body.list_id, 10);
+    const servings = parseInt(req.body.servings, 10);
+    if (!Number.isInteger(listId) || listId <= 0) return res.status(400).json({ error: 'list_id is vereist.', code: 400 });
+    if (!Number.isInteger(servings) || servings < 1) return res.status(400).json({ error: 'servings moet ≥ 1 zijn.', code: 400 });
+
+    const list = db.get().prepare('SELECT id FROM shopping_lists WHERE id = ?').get(listId);
+    if (!list) return res.status(404).json({ error: 'Boodschappenlijst niet gevonden.', code: 404 });
+
+    const recipe = db.get().prepare('SELECT * FROM recipes WHERE id = ?').get(meal.recipe_id);
+    if (!recipe) return res.status(404).json({ error: 'Recept niet gevonden.', code: 404 });
+
+    const recipeServings = recipe.servings || 4;
+    const scale = servings / recipeServings;
+
+    const ingredients = db.get().prepare(
+      `SELECT * FROM recipe_ingredients WHERE recipe_id = ? ORDER BY sort_order ASC`
+    ).all(meal.recipe_id);
+
+    let added = 0;
+    let merged = 0;
+
+    for (const ing of ingredients) {
+      const normalizedName = ing.name.toLowerCase().trim();
+      const scaledQty      = ing.quantity != null ? Math.round(ing.quantity * scale * 10) / 10 : null;
+
+      const existing = db.get().prepare(`
+        SELECT * FROM shopping_items
+        WHERE list_id = ? AND LOWER(TRIM(name)) = ? AND is_checked = 0
+        LIMIT 1
+      `).get(listId, normalizedName);
+
+      if (existing && scaledQty != null) {
+        const existingUnit = existing.quantity ? String(existing.quantity).replace(/[\d.,\s]/g, '').trim().toLowerCase() : null;
+        const newUnit      = ing.unit ? ing.unit.toLowerCase() : null;
+
+        if (existingUnit === newUnit || (!existingUnit && !newUnit)) {
+          const existingQtyNum = parseFloat(String(existing.quantity)) || 0;
+          const newQty         = existingQtyNum + scaledQty;
+          const qtyStr         = newUnit ? `${newQty} ${newUnit}` : String(newQty);
+          db.get().prepare(`UPDATE shopping_items SET quantity = ? WHERE id = ?`).run(qtyStr, existing.id);
+          merged++;
+          continue;
+        }
+      }
+
+      const qtyStr = scaledQty != null ? (ing.unit ? `${scaledQty} ${ing.unit}` : String(scaledQty)) : null;
+      db.get().prepare(`
+        INSERT INTO shopping_items (list_id, name, quantity, category) VALUES (?, ?, ?, ?)
+      `).run(listId, ing.name, qtyStr, 'Sonstiges');
+      added++;
+    }
+
+    res.json({ ok: true, added, merged });
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: 'Interne fout', code: 500 });
   }
 });
 
