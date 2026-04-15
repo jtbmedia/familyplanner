@@ -97,6 +97,7 @@
   --module-notes:      #BF8700;  /* Gold - Notizen, Pinnwand */
   --module-contacts:   #0969DA;  /* Kräftiges Blau - Kontakte */
   --module-budget:     #1A7F5A;  /* Teal - Finanzen, Stabilität */
+  --module-recipes:    #C2410C;  /* Burnt Orange - Koken, Recepten */
   --module-settings:   #6E7781;  /* Grau - Konfiguration */
 
   /* --------------------------------------------------------
@@ -319,6 +320,7 @@
     --module-notes:     #FCD34D;
     --module-contacts:  #60A5FA;
     --module-budget:    #34D399;
+    --module-recipes:   #FB923C;  /* Warm oranje - Dark Mode */
     --module-settings:  #94A3B8;
 
     /* Mahlzeit-Typ - Dark Mode */
@@ -402,6 +404,7 @@
   --module-notes:     #FCD34D;
   --module-contacts:  #60A5FA;
   --module-budget:    #34D399;
+  --module-recipes:   #FB923C;
   --module-settings:  #94A3B8;
 
   /* Mahlzeit-Typ - Dark Mode */

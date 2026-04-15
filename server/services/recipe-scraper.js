@@ -57,11 +57,33 @@ function parseServings(raw) {
 }
 
 /**
+ * Controleert of een @type waarde overeenkomt met het Schema.org Recipe type.
+ * Ondersteunt korte naam ("Recipe"), arrays (["Recipe", "Thing"]),
+ * en volledige URI's ("http://schema.org/Recipe", "https://schema.org/Recipe").
+ */
+function isRecipeType(type) {
+  if (!type) return false;
+  const typeArr = Array.isArray(type) ? type : [type];
+  return typeArr.some((t) => {
+    if (typeof t !== 'string') return false;
+    return t === 'Recipe' ||
+           t === 'http://schema.org/Recipe' ||
+           t === 'https://schema.org/Recipe';
+  });
+}
+
+/**
  * Extraheert het eerste Recipe-object uit een JSON-LD waarde.
- * Ondersteunt losse objecten en @graph arrays.
+ * Ondersteunt:
+ *  - Losse objecten met @type: "Recipe"
+ *  - @type als array: ["Recipe", "Thing"]
+ *  - Volledige URI's: "http://schema.org/Recipe"
+ *  - @graph arrays
+ *  - Geneste arrays
  */
 function findRecipe(parsed) {
   if (!parsed || typeof parsed !== 'object') return null;
+
   if (Array.isArray(parsed)) {
     for (const item of parsed) {
       const found = findRecipe(item);
@@ -69,13 +91,42 @@ function findRecipe(parsed) {
     }
     return null;
   }
-  if (parsed['@type'] === 'Recipe') return parsed;
+
+  if (isRecipeType(parsed['@type'])) return parsed;
+
   if (Array.isArray(parsed['@graph'])) {
     for (const item of parsed['@graph']) {
-      if (item['@type'] === 'Recipe') return item;
+      const found = findRecipe(item);
+      if (found) return found;
     }
   }
+
   return null;
+}
+
+/**
+ * Vlakt recipeInstructions plat — ondersteunt strings, HowToStep en HowToSection.
+ * HowToSection kan geneste itemListElement bevatten.
+ */
+function flattenInstructions(raw) {
+  if (!Array.isArray(raw)) return [];
+  const result = [];
+  for (const item of raw) {
+    if (typeof item === 'string') {
+      const text = item.trim();
+      if (text) result.push(text);
+    } else if (item && typeof item === 'object') {
+      const sectionType = Array.isArray(item['@type']) ? item['@type'][0] : item['@type'];
+      if (sectionType === 'HowToSection' && Array.isArray(item.itemListElement)) {
+        // Recursief uitvouwen van HowToSection → HowToStep
+        result.push(...flattenInstructions(item.itemListElement));
+      } else {
+        const text = (item.text || item.name || '').trim();
+        if (text) result.push(text);
+      }
+    }
+  }
+  return result;
 }
 
 /**
@@ -107,12 +158,27 @@ export async function scrape(url) {
   let html;
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; OikosBot/1.0)' },
-      signal:  AbortSignal.timeout(10_000),
-      size:    2 * 1024 * 1024, // max 2MB
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'nl,en;q=0.9',
+      },
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    html = await res.text();
+
+    // Handmatige 2MB limiet (node-fetch v3 ondersteunt de size-optie niet meer)
+    const MAX_BYTES = 2 * 1024 * 1024;
+    const chunks = [];
+    let received = 0;
+    for await (const chunk of res.body) {
+      received += chunk.length;
+      if (received > MAX_BYTES) {
+        throw new Error('Pagina te groot (max 2MB).');
+      }
+      chunks.push(chunk);
+    }
+    html = Buffer.concat(chunks).toString('utf-8');
   } catch (err) {
     log.warn(`Fetch mislukt voor ${url}: ${err.message}`);
     throw new Error(`Kon de pagina niet ophalen: ${err.message}`);
@@ -141,23 +207,33 @@ export async function scrape(url) {
   const rawIngredients = Array.isArray(recipe.recipeIngredient) ? recipe.recipeIngredient : [];
   const ingredients = rawIngredients.map((raw) => parseIngredient(String(raw)));
 
-  // Stappen parsen
-  const rawSteps = Array.isArray(recipe.recipeInstructions) ? recipe.recipeInstructions : [];
-  const steps = rawSteps.map((s, i) => ({
+  // Stappen parsen — ondersteunt strings, HowToStep en HowToSection
+  const instructions = flattenInstructions(
+    Array.isArray(recipe.recipeInstructions) ? recipe.recipeInstructions : []
+  );
+  const steps = instructions.map((instruction, i) => ({
     step_number: i + 1,
-    instruction: typeof s === 'string' ? s.trim() : (s.text || s.name || '').trim(),
-  })).filter((s) => s.instruction);
+    instruction,
+  }));
 
-  // Afbeelding
+  // Afbeelding — kan string, array of ImageObject zijn
   const image = recipe.image;
-  const imageUrl = Array.isArray(image) ? image[0] : (typeof image === 'string' ? image : image?.url || null);
+  let imageUrl = null;
+  if (typeof image === 'string') {
+    imageUrl = image;
+  } else if (Array.isArray(image)) {
+    const first = image[0];
+    imageUrl = typeof first === 'string' ? first : (first?.url || null);
+  } else if (image && typeof image === 'object') {
+    imageUrl = image.url || null;
+  }
 
   return {
     title:       String(recipe.name || '').trim(),
     servings:    parseServings(recipe.recipeYield),
     ingredients,
     steps,
-    imageUrl:    imageUrl || null,
+    imageUrl,
     sourceUrl:   url,
   };
 }

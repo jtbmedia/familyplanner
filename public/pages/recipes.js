@@ -295,12 +295,10 @@ async function renderForm(container, existing = null) {
         <input class="form-input" type="url" id="recipe-source" value="${esc(existing?.source_url || '')}" />
       </div>
 
-      ${isEdit ? `
-        <div class="form-group">
-          <label class="form-label">${t('recipes.uploadPhoto')}</label>
-          <input type="file" id="recipe-photo-file" accept="image/jpeg,image/png,image/webp" />
-        </div>
-      ` : ''}
+      <div class="form-group">
+        <label class="form-label">${t('recipes.uploadPhoto')}</label>
+        <input type="file" id="recipe-photo-file" accept="image/jpeg,image/png,image/webp" />
+      </div>
       <div class="form-group">
         <label class="form-label">${t('recipes.photoUrl')}</label>
         <input class="form-input" type="url" id="recipe-photo-url" value="${esc(existing?.photo_url || '')}" />

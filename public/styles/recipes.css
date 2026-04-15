@@ -1,0 +1,313 @@
+/**
+ * Modul: Recepten (Recipes)
+ * Zweck: Styles voor receptenoverzicht, detailpagina, formulier en URL-import
+ * Afhankelijkheden: tokens.css, layout.css
+ */
+
+/* --------------------------------------------------------
+ * Modul-Akzent
+ * -------------------------------------------------------- */
+.recipes-page { --module-accent: var(--module-recipes); }
+
+/* --------------------------------------------------------
+ * Zoekbalk + Tag-filter
+ * -------------------------------------------------------- */
+.recipes-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 3px solid var(--module-recipes);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.recipe-tags-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* --------------------------------------------------------
+ * Tag-chips (overzicht + detail)
+ * -------------------------------------------------------- */
+.recipe-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  background-color: var(--color-surface-3);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.recipe-tag--active,
+.recipe-tags-filter .recipe-tag:hover {
+  background-color: color-mix(in srgb, var(--module-recipes) 12%, transparent);
+  color: var(--module-recipes);
+  border-color: var(--module-recipes);
+}
+
+/* --------------------------------------------------------
+ * Recepten-grid (overzicht)
+ * -------------------------------------------------------- */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+@media (max-width: 480px) {
+  .recipes-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+}
+
+/* --------------------------------------------------------
+ * Recept-kaart
+ * -------------------------------------------------------- */
+.recipe-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.recipe-card:active {
+  transform: translateY(0);
+}
+
+.recipe-card__photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background-color: var(--color-surface-3);
+}
+
+.recipe-card__photo--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(in srgb, var(--module-recipes) 8%, var(--color-surface-3));
+}
+
+.recipe-card__photo--placeholder::before {
+  content: '🍽';
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.recipe-card__body {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.recipe-card__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-snug);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recipe-card__meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.recipe-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.recipe-card__tags .recipe-tag {
+  cursor: default;
+}
+
+/* --------------------------------------------------------
+ * Detail-weergave
+ * -------------------------------------------------------- */
+.recipe-detail__photo {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  display: block;
+  margin-bottom: var(--space-4);
+}
+
+.recipe-detail__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2);
+  line-height: var(--line-height-snug);
+}
+
+.recipe-detail__desc {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-4);
+}
+
+.recipe-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recipe-detail__servings {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--module-recipes);
+  background-color: color-mix(in srgb, var(--module-recipes) 10%, transparent);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.recipe-detail__source {
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.recipe-detail__source:hover {
+  text-decoration: underline;
+}
+
+.recipe-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.recipe-detail__tags .recipe-tag {
+  cursor: default;
+}
+
+.recipe-detail__ingredients {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.recipe-detail__ingredients li {
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  line-height: var(--line-height-base);
+}
+
+.recipe-detail__steps {
+  padding-left: var(--space-6);
+  margin: 0 0 var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.recipe-detail__steps li {
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  padding-left: var(--space-2);
+}
+
+/* --------------------------------------------------------
+ * Formulier — Ingrediënten-rijen
+ * -------------------------------------------------------- */
+.recipe-ingredient-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 80px auto;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 480px) {
+  .recipe-ingredient-row {
+    grid-template-columns: 1fr auto auto;
+    grid-template-rows: auto auto;
+  }
+
+  .recipe-ingredient-row [data-field="name"] {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --------------------------------------------------------
+ * Formulier — Stap-rijen
+ * -------------------------------------------------------- */
+.recipe-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.recipe-step-num {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--module-recipes);
+  min-width: 24px;
+  padding-top: var(--space-2);
+  flex-shrink: 0;
+}
+
+.recipe-step-row textarea {
+  flex: 1;
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* --------------------------------------------------------
+ * URL-import: input + knop naast elkaar
+ * -------------------------------------------------------- */
+.input-with-btn {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.input-with-btn .form-input {
+  flex: 1;
+}
