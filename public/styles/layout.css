@@ -199,6 +199,23 @@
   color: var(--active-module-accent, var(--color-accent));
 }
 
+/* Pill-indicator boven actief item (mobile bottom nav) */
+.nav-bottom .nav-item {
+  position: relative;
+}
+
+.nav-bottom .nav-item[aria-current="page"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 3px;
+  border-radius: 0 0 var(--radius-full) var(--radius-full);
+  background: var(--active-module-accent, var(--color-accent));
+}
+
 .nav-item__icon {
   width: var(--space-5);
   height: var(--space-5);
@@ -329,18 +346,19 @@
 
   /* App-Icon als kompaktes Logo */
   .nav-sidebar__logo::before {
-    content: 'O';
+    content: 'TB';
     width: var(--target-sm);
     height: var(--target-sm);
     border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--color-accent) 0%, #7C5CFC 100%);
-    color: var(--color-text-on-accent);
-    font-size: var(--text-sm);
+    background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+    color: #FFFFFF;
+    font-size: 10px;
     font-weight: var(--font-weight-bold);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    letter-spacing: -0.5px;
   }
 
   /* Logo-Text verstecken im collapsed-Modus */
@@ -392,10 +410,20 @@
     overflow: hidden;
   }
 
+  /* Inactief: module-kleur icoon op gedempte opacity */
+  .nav-sidebar .nav-item:not([aria-current="page"]) .nav-item__icon {
+    opacity: 0.45;
+    color: var(--active-module-accent, var(--color-text-secondary));
+  }
+
   /* ── Hover: dezente Hintergrundfarbe ── */
   .nav-sidebar .nav-item:hover:not([aria-current="page"]) {
     color: var(--color-text-primary);
     background-color: var(--color-surface-3);
+  }
+
+  .nav-sidebar .nav-item:hover:not([aria-current="page"]) .nav-item__icon {
+    opacity: 0.75;
   }
 
   /* ── Aktiv: Hintergrund-Highlight + Akzent-Indikator ── */
@@ -565,12 +593,12 @@
 }
 
 .card--interactive:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
 .card--interactive:active {
-  transform: scale(0.99);
+  transform: translateY(0) scale(0.99);
 }
 
 .card--interactive:focus-visible {
@@ -853,11 +881,16 @@
   background-color: var(--color-btn-primary);
   color: var(--color-text-on-accent);
   box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-full);
 }
 
 .btn--primary:hover {
   background-color: var(--color-btn-primary-hover);
   box-shadow: var(--shadow-md);
+}
+
+.btn--primary:active {
+  transform: scale(0.97);
 }
 
 .btn--secondary {
