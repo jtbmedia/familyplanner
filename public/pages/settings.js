@@ -1174,11 +1174,11 @@ function formatDateTime(iso) {
 }
 
 function currentTheme() {
-  return localStorage.getItem('oikos-theme') || 'system';
+  return localStorage.getItem('thuisbasis-theme') || localStorage.getItem('oikos-theme') || 'system';
 }
 
 function applyTheme(value) {
-  localStorage.setItem('oikos-theme', value);
+  localStorage.setItem('thuisbasis-theme', value);
   if (value === 'light' || value === 'dark') {
     document.documentElement.setAttribute('data-theme', value);
   } else {
