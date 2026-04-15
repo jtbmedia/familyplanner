@@ -13,9 +13,9 @@
   <!-- iOS-spezifisch -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Oikos" />
-  <meta name="description" content="Oikos - Familienplaner" />
-  <title>Oikos</title>
+  <meta name="apple-mobile-web-app-title" content="ThuisBasis" />
+  <meta name="description" content="ThuisBasis - Alles voor thuis, op één plek" />
+  <title>ThuisBasis</title>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json" />
@@ -25,6 +25,11 @@
 
   <!-- DNS-Prefetch für externe Ressourcen -->
   <link rel="dns-prefetch" href="https://openweathermap.org" />
+
+  <!-- Plus Jakarta Sans — ThuisBasis typografie -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,opsz,wght@0,6..18,300;0,6..18,400;0,6..18,500;0,6..18,600;0,6..18,700;1,6..18,400&display=swap" />
 
   <!-- Preload: kritische ES-Module (modulepreload ist korrekt für type="module") -->
   <link rel="modulepreload" href="/api.js" />
@@ -41,7 +46,7 @@
   <!-- Theme: Vor CSS-Rendering anwenden (Flash-Prevention) -->
   <script>
     (function() {
-      var t = localStorage.getItem('oikos-theme');
+      var t = localStorage.getItem('thuisbasis-theme') || localStorage.getItem('oikos-theme');
       if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
@@ -53,8 +58,8 @@
   <!-- App-Shell - wird durch JavaScript gefüllt -->
   <div id="app" class="app-shell">
     <!-- Skeleton-Loading während Initialisierung -->
-    <div id="app-loading" class="app-loading" aria-live="polite" aria-label="Lade Oikos…">
-      <div class="app-loading__logo">Oikos</div>
+    <div id="app-loading" class="app-loading" aria-live="polite" aria-label="ThuisBasis laden…">
+      <div class="app-loading__logo">ThuisBasis</div>
     </div>
   </div>
 
@@ -63,8 +68,8 @@
   <script type="module" src="/router.js"></script>
 
   <!-- Install-Prompt (PWA) -->
-  <oikos-install-prompt></oikos-install-prompt>
-  <script type="module" src="/components/oikos-install-prompt.js"></script>
+  <thuisbasis-install-prompt></thuisbasis-install-prompt>
+  <script type="module" src="/components/thuisbasis-install-prompt.js"></script>
 
   <!-- Service Worker registrieren -->
   <script src="/sw-register.js" defer></script>
