@@ -43,18 +43,18 @@
   --neutral-900: #1C1C1A;
   --neutral-950: #121211;
 
-  /* Semantische Aliase (abwärtskompatibel) */
-  --color-bg:             var(--neutral-100);
+  /* Semantische Aliase — warm-neutraal palet */
+  --color-bg:             #FAFAF7;
   --color-surface:        #FFFFFF;
-  --color-surface-2:      var(--neutral-50);
-  --color-surface-3:      var(--neutral-150);
-  --color-border:         var(--neutral-200);
-  --color-border-subtle:  var(--neutral-150);
-  --color-text-primary:   var(--neutral-900);
-  --color-text-secondary: var(--neutral-600);  /* WCAG AA: ~5.0:1 auf weiß */
-  --color-text-tertiary:  #737370;
-  --color-text-disabled:  var(--neutral-300);
-  --color-text-on-accent: #ffffff;  /* Weißer Text auf farbigen Hintergründen (Buttons, Badges, FAB) */
+  --color-surface-2:      #F5F4EF;
+  --color-surface-3:      #EEECEA;
+  --color-border:         #E8E6E0;
+  --color-border-subtle:  #F0EEE8;
+  --color-text-primary:   #1A1917;
+  --color-text-secondary: #6B6A65;
+  --color-text-tertiary:  #9B9A96;
+  --color-text-disabled:  #C4C2BE;
+  --color-text-on-accent: #FFFFFF;
 
   /* --------------------------------------------------------
    * 2. Farben - Akzent (konfigurierbar)
@@ -89,16 +89,16 @@
    *    Jedes Modul hat eine eigene dezente Akzentfarbe.
    *    Einsatz in Modul-Headern, Icons, aktiven States.
    * -------------------------------------------------------- */
-  --module-dashboard:  #2563EB;  /* Blau - Übersicht, neutral */
-  --module-tasks:      #15803D;  /* Grün - Erledigung, Fortschritt */
-  --module-calendar:   #8250DF;  /* Violett - Termine, Zeit */
-  --module-meals:      #B45309;  /* Orange - Essen, Wärme */
-  --module-shopping:   #D4511E;  /* Rot-Orange - Einkaufen, Aktion */
-  --module-notes:      #BF8700;  /* Gold - Notizen, Pinnwand */
-  --module-contacts:   #0969DA;  /* Kräftiges Blau - Kontakte */
-  --module-budget:     #1A7F5A;  /* Teal - Finanzen, Stabilität */
-  --module-recipes:    #C2410C;  /* Burnt Orange - Koken, Recepten */
-  --module-settings:   #6E7781;  /* Grau - Konfiguration */
+  --module-dashboard:  #2563EB;   /* Blauw */
+  --module-tasks:      #16A34A;   /* Groen */
+  --module-calendar:   #7C3AED;   /* Paars */
+  --module-meals:      #EA580C;   /* Oranje */
+  --module-recipes:    #C2410C;   /* Rood-oranje */
+  --module-shopping:   #0891B2;   /* Cyaan */
+  --module-notes:      #CA8A04;   /* Amber */
+  --module-contacts:   #0284C7;   /* Hemelsblauw */
+  --module-budget:     #059669;   /* Smaragd */
+  --module-settings:   #64748B;   /* Leisteen */
 
   /* --------------------------------------------------------
    * 5. Farben - Mahlzeit-Typen
@@ -153,11 +153,11 @@
   /* --------------------------------------------------------
    * 9. Border-Radien
    * -------------------------------------------------------- */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-xs:   4px;
+  --radius-sm:   10px;
+  --radius-md:   16px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
   --radius-full: 9999px;
 
   /* --------------------------------------------------------
@@ -165,7 +165,7 @@
    *     System-Font-Stack laut Redesign-Spec.
    *     Skala von xs (12px) bis 4xl (36px).
    * -------------------------------------------------------- */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
 
   /* Size-Skala */
@@ -220,7 +220,7 @@
    * -------------------------------------------------------- */
   --nav-height-mobile: 56px;
   --nav-bottom-height: calc(var(--nav-height-mobile) + 12px); /* scroll (56px) + dots-indicator (12px) */
-  --sidebar-width: 56px;             /* collapsed icon-only (1024–1279px) */
+  --sidebar-width: 64px;             /* collapsed icon-only (1024–1279px) */
   --sidebar-width-expanded: 220px;   /* full sidebar (1280px+), max 240px laut Spec */
   --content-max-width: 1280px;
 
@@ -281,13 +281,20 @@
     --neutral-900: #F5F4F1;
     --neutral-950: #FAFAF8;
 
-    /* Semantische Aliase folgen automatisch via var(--neutral-*) */
-    --color-surface:   #2A2A28;
-    --color-surface-2: #1A1A18;
-    --color-surface-3: #333331;
+    /* Semantische Aliase — warm donker */
+    --color-bg:             #1C1B19;
+    --color-surface:        #242320;
+    --color-surface-2:      #1A1918;
+    --color-surface-3:      #2E2C2A;
+    --color-border:         #38362F;
+    --color-border-subtle:  #2A2825;
+    --color-text-primary:   #F0EFE9;
+    --color-text-secondary: #A8A69F;
+    --color-text-tertiary:  #737068;
+    --color-text-disabled:  #4A4845;
 
     /* Sidebar */
-    --sidebar-bg: #1A1A18;
+    --sidebar-bg: #1C1B19;
     --sidebar-shadow-light: rgba(255, 255, 255, 0.04);
     --sidebar-shadow-dark: rgba(0, 0, 0, 0.4);
 
@@ -311,16 +318,16 @@
     --color-danger-light:  #3D1C1A;
     --color-info-light:    #1A2D40;
 
-    /* Modul-Akzente - Dark Mode */
+    /* Modul-Akzente - Dark Mode (lichtere varianten) */
     --module-dashboard: #60A5FA;
     --module-tasks:     #4ADE80;
     --module-calendar:  #A78BFA;
-    --module-meals:     #F59E0B;
-    --module-shopping:  #FB923C;
+    --module-meals:     #FB923C;
+    --module-recipes:   #F97316;
+    --module-shopping:  #22D3EE;
     --module-notes:     #FCD34D;
-    --module-contacts:  #60A5FA;
+    --module-contacts:  #38BDF8;
     --module-budget:    #34D399;
-    --module-recipes:   #FB923C;  /* Warm oranje - Dark Mode */
     --module-settings:  #94A3B8;
 
     /* Mahlzeit-Typ - Dark Mode */
@@ -367,11 +374,18 @@
   --neutral-900: #F5F4F1;
   --neutral-950: #FAFAF8;
 
-  --color-surface:   #2A2A28;
-  --color-surface-2: #1A1A18;
-  --color-surface-3: #333331;
+  --color-bg:             #1C1B19;
+  --color-surface:        #242320;
+  --color-surface-2:      #1A1918;
+  --color-surface-3:      #2E2C2A;
+  --color-border:         #38362F;
+  --color-border-subtle:  #2A2825;
+  --color-text-primary:   #F0EFE9;
+  --color-text-secondary: #A8A69F;
+  --color-text-tertiary:  #737068;
+  --color-text-disabled:  #4A4845;
 
-  --sidebar-bg: #1A1A18;
+  --sidebar-bg: #1C1B19;
   --sidebar-shadow-light: rgba(255, 255, 255, 0.04);
   --sidebar-shadow-dark: rgba(0, 0, 0, 0.4);
 
@@ -395,16 +409,16 @@
   --color-danger-light:  #3D1C1A;
   --color-info-light:    #1A2D40;
 
-  /* Modul-Akzente - Dark Mode */
+  /* Modul-Akzente - Dark Mode (lichtere varianten) */
   --module-dashboard: #60A5FA;
   --module-tasks:     #4ADE80;
   --module-calendar:  #A78BFA;
-  --module-meals:     #F59E0B;
-  --module-shopping:  #FB923C;
+  --module-meals:     #FB923C;
+  --module-recipes:   #F97316;
+  --module-shopping:  #22D3EE;
   --module-notes:     #FCD34D;
-  --module-contacts:  #60A5FA;
+  --module-contacts:  #38BDF8;
   --module-budget:    #34D399;
-  --module-recipes:   #FB923C;
   --module-settings:  #94A3B8;
 
   /* Mahlzeit-Typ - Dark Mode */
