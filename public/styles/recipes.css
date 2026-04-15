@@ -9,6 +9,10 @@
  * -------------------------------------------------------- */
 .recipes-page { --module-accent: var(--module-recipes); }
 
+.recipes-page .card {
+  background-color: color-mix(in srgb, var(--module-recipes) 8%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
  * Zoekbalk + Tag-filter
  * -------------------------------------------------------- */

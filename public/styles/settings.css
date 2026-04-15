@@ -9,6 +9,10 @@
  * -------------------------------------------------------- */
 .settings-page { --module-accent: var(--module-settings); }
 
+.settings-page .card {
+  background-color: color-mix(in srgb, var(--module-settings) 6%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
    Seiten-Layout - nutzt layout-center (max 720px)
    -------------------------------------------------------- */

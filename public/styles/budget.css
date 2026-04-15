@@ -9,6 +9,10 @@
  * -------------------------------------------------------- */
 .budget-page { --module-accent: var(--module-budget); }
 
+.budget-page .card {
+  background-color: color-mix(in srgb, var(--module-budget) 8%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
  * Seiten-Layout
  * -------------------------------------------------------- */

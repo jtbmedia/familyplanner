@@ -9,6 +9,10 @@
  * -------------------------------------------------------- */
 .notes-page { --module-accent: var(--module-notes); }
 
+.notes-page .card {
+  background-color: color-mix(in srgb, var(--module-notes) 8%, var(--color-surface));
+}
+
 /* --------------------------------------------------------
  * Seiten-Layout
  * -------------------------------------------------------- */
