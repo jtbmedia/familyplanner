@@ -447,6 +447,46 @@ const MIGRATIONS = [
       ALTER TABLE oauth_pending_new RENAME TO oauth_pending;
     `,
   },
+  {
+    version: 10,
+    description: 'Receptenbibliotheek: recipes, recipe_ingredients, recipe_steps + recipe_id op meals',
+    up: `
+      CREATE TABLE IF NOT EXISTS recipes (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        title       TEXT    NOT NULL,
+        description TEXT,
+        servings    INTEGER NOT NULL DEFAULT 4,
+        photo_path  TEXT,
+        photo_url   TEXT,
+        source_url  TEXT,
+        tags        TEXT,
+        created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+        updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS recipe_ingredients (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id  INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+        name       TEXT    NOT NULL,
+        quantity   REAL,
+        unit       TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0
+      );
+
+      CREATE TABLE IF NOT EXISTS recipe_steps (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id   INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+        step_number INTEGER NOT NULL,
+        instruction TEXT    NOT NULL
+      );
+
+      ALTER TABLE meals ADD COLUMN recipe_id INTEGER REFERENCES recipes(id) ON DELETE SET NULL;
+
+      CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe ON recipe_ingredients(recipe_id);
+      CREATE INDEX IF NOT EXISTS idx_recipe_steps_recipe ON recipe_steps(recipe_id);
+    `,
+  },
 ];
 
 /**
