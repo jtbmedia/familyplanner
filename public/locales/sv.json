@@ -578,7 +578,9 @@
     "personalSyncSuccessGoogle": "Google Kalender ansluten. Välj en kalender nedan.",
     "personalSyncErrorGoogle": "Anslutning till Google misslyckades. Försök igen.",
     "personalSyncSuccessMicrosoft": "Microsoft 365 ansluten. Välj en kalender nedan.",
-    "personalSyncErrorMicrosoft": "Anslutning till Microsoft misslyckades. Försök igen."
+    "personalSyncErrorMicrosoft": "Anslutning till Microsoft misslyckades. Försök igen.",
+    "recipesEnabled": "Receptbibliotek",
+    "modulesSection": "Moduler"
   },
   "login": {
     "tagline": "Familjeplanering. Säker. Sekretessvänlig. Öppen källkod.",
@@ -624,5 +626,38 @@
     "unitWeeks": "veckor",
     "unitMonth": "månad",
     "unitMonths": "månader"
+  },
+  "recipes": {
+    "title": "Recept",
+    "add": "Lägg till recept",
+    "edit": "Redigera recept",
+    "delete": "Ta bort recept",
+    "deleteConfirm": "Ta bort detta recept permanent?",
+    "importUrl": "Importera från URL",
+    "importBtn": "Importera",
+    "importing": "Importerar...",
+    "importFailed": "Kunde inte importera recept från denna URL.",
+    "servings": "Portioner",
+    "steps": "Tillagning",
+    "ingredients": "Ingredienser",
+    "tags": "Taggar",
+    "source": "Källa",
+    "addIngredient": "Lägg till ingrediens",
+    "addStep": "Lägg till steg",
+    "addToMealPlan": "Lägg till i måltidsplanen",
+    "toShoppingList": "Ingredienser till inköpslistan",
+    "toShoppingDone": "{{ added }} tillagda, {{ merged }} sammanfogade.",
+    "selectList": "Välj en lista",
+    "noRecipes": "Inga recept ännu. Lägg till ditt första recept!",
+    "searchPlaceholder": "Sök recept...",
+    "forPersons": "För {{ n }} personer",
+    "uploadPhoto": "Ladda upp foto",
+    "photoUrl": "Eller foto-URL",
+    "manualTab": "Manuellt",
+    "importTab": "Importera från URL",
+    "scaleServings": "Antal personer",
+    "mealDate": "Datum",
+    "mealType": "Måltidstyp",
+    "addToMealPlanSuccess": "Recept tillagt i måltidsplanen."
   }
 }

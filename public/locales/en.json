@@ -578,7 +578,9 @@
     "personalSyncSuccessGoogle": "Google Calendar connected. Select a calendar below.",
     "personalSyncErrorGoogle": "Connection to Google failed. Please try again.",
     "personalSyncSuccessMicrosoft": "Microsoft 365 connected. Select a calendar below.",
-    "personalSyncErrorMicrosoft": "Connection to Microsoft failed. Please try again."
+    "personalSyncErrorMicrosoft": "Connection to Microsoft failed. Please try again.",
+    "recipesEnabled": "Recipe library",
+    "modulesSection": "Modules"
   },
   "login": {
     "tagline": "Family planning. Secure. Privacy-friendly. Open source.",
@@ -624,5 +626,38 @@
     "unitWeeks": "weeks",
     "unitMonth": "month",
     "unitMonths": "months"
+  },
+  "recipes": {
+    "title": "Recipes",
+    "add": "Add recipe",
+    "edit": "Edit recipe",
+    "delete": "Delete recipe",
+    "deleteConfirm": "Permanently delete this recipe?",
+    "importUrl": "Import from URL",
+    "importBtn": "Import",
+    "importing": "Importing...",
+    "importFailed": "Could not import recipe from this URL.",
+    "servings": "Servings",
+    "steps": "Instructions",
+    "ingredients": "Ingredients",
+    "tags": "Tags",
+    "source": "Source",
+    "addIngredient": "Add ingredient",
+    "addStep": "Add step",
+    "addToMealPlan": "Add to meal plan",
+    "toShoppingList": "Ingredients to shopping list",
+    "toShoppingDone": "{{ added }} added, {{ merged }} merged.",
+    "selectList": "Choose a list",
+    "noRecipes": "No recipes yet. Add your first recipe!",
+    "searchPlaceholder": "Search recipes...",
+    "forPersons": "For {{ n }} persons",
+    "uploadPhoto": "Upload photo",
+    "photoUrl": "Or photo URL",
+    "manualTab": "Manual",
+    "importTab": "Import from URL",
+    "scaleServings": "Number of persons",
+    "mealDate": "Date",
+    "mealType": "Meal type",
+    "addToMealPlanSuccess": "Recipe added to meal plan."
   }
 }

@@ -578,7 +578,9 @@
     "personalSyncSuccessGoogle": "Google Kalender verbunden. Unten einen Kalender auswählen.",
     "personalSyncErrorGoogle": "Verbindung mit Google fehlgeschlagen. Bitte erneut versuchen.",
     "personalSyncSuccessMicrosoft": "Microsoft 365 verbunden. Unten einen Kalender auswählen.",
-    "personalSyncErrorMicrosoft": "Verbindung mit Microsoft fehlgeschlagen. Bitte erneut versuchen."
+    "personalSyncErrorMicrosoft": "Verbindung mit Microsoft fehlgeschlagen. Bitte erneut versuchen.",
+    "recipesEnabled": "Rezeptbibliothek",
+    "modulesSection": "Module"
   },
   "login": {
     "tagline": "Familienplanung. Sicher. Datenschutzfreundlich. Open Source.",
@@ -624,5 +626,38 @@
     "unitWeeks": "Wochen",
     "unitMonth": "Monat",
     "unitMonths": "Monate"
+  },
+  "recipes": {
+    "title": "Rezepte",
+    "add": "Rezept hinzufügen",
+    "edit": "Rezept bearbeiten",
+    "delete": "Rezept löschen",
+    "deleteConfirm": "Dieses Rezept dauerhaft löschen?",
+    "importUrl": "Via URL importieren",
+    "importBtn": "Importieren",
+    "importing": "Importiere...",
+    "importFailed": "Rezept konnte nicht von dieser URL importiert werden.",
+    "servings": "Portionen",
+    "steps": "Zubereitung",
+    "ingredients": "Zutaten",
+    "tags": "Tags",
+    "source": "Quelle",
+    "addIngredient": "Zutat hinzufügen",
+    "addStep": "Schritt hinzufügen",
+    "addToMealPlan": "Zum Essensplan hinzufügen",
+    "toShoppingList": "Zutaten zur Einkaufsliste",
+    "toShoppingDone": "{{ added }} hinzugefügt, {{ merged }} zusammengeführt.",
+    "selectList": "Liste auswählen",
+    "noRecipes": "Noch keine Rezepte. Füge dein erstes Rezept hinzu!",
+    "searchPlaceholder": "Rezepte suchen...",
+    "forPersons": "Für {{ n }} Personen",
+    "uploadPhoto": "Foto hochladen",
+    "photoUrl": "Oder Foto-URL",
+    "manualTab": "Manuell",
+    "importTab": "Via URL importieren",
+    "scaleServings": "Anzahl Personen",
+    "mealDate": "Datum",
+    "mealType": "Mahlzeittyp",
+    "addToMealPlanSuccess": "Rezept zum Essensplan hinzugefügt."
   }
 }

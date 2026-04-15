@@ -578,7 +578,9 @@
     "personalSyncSuccessGoogle": "Google Calendar connesso. Seleziona un calendario qui sotto.",
     "personalSyncErrorGoogle": "Connessione a Google non riuscita. Riprova.",
     "personalSyncSuccessMicrosoft": "Microsoft 365 connesso. Seleziona un calendario qui sotto.",
-    "personalSyncErrorMicrosoft": "Connessione a Microsoft non riuscita. Riprova."
+    "personalSyncErrorMicrosoft": "Connessione a Microsoft non riuscita. Riprova.",
+    "recipesEnabled": "Libreria ricette",
+    "modulesSection": "Moduli"
   },
   "login": {
     "tagline": "Pianificazione familiare. Sicura. Rispettosa della privacy. Open source.",
@@ -601,5 +603,38 @@
   },
   "modal": {
     "closeLabel": "Chiudi"
+  },
+  "recipes": {
+    "title": "Ricette",
+    "add": "Aggiungi ricetta",
+    "edit": "Modifica ricetta",
+    "delete": "Elimina ricetta",
+    "deleteConfirm": "Eliminare definitivamente questa ricetta?",
+    "importUrl": "Importa da URL",
+    "importBtn": "Importa",
+    "importing": "Importazione...",
+    "importFailed": "Impossibile importare la ricetta da questo URL.",
+    "servings": "Porzioni",
+    "steps": "Preparazione",
+    "ingredients": "Ingredienti",
+    "tags": "Tag",
+    "source": "Fonte",
+    "addIngredient": "Aggiungi ingrediente",
+    "addStep": "Aggiungi passaggio",
+    "addToMealPlan": "Aggiungi al piano pasti",
+    "toShoppingList": "Ingredienti alla lista della spesa",
+    "toShoppingDone": "{{ added }} aggiunti, {{ merged }} uniti.",
+    "selectList": "Scegli una lista",
+    "noRecipes": "Ancora nessuna ricetta. Aggiungi la tua prima ricetta!",
+    "searchPlaceholder": "Cerca ricette...",
+    "forPersons": "Per {{ n }} persone",
+    "uploadPhoto": "Carica foto",
+    "photoUrl": "O URL foto",
+    "manualTab": "Manuale",
+    "importTab": "Importa da URL",
+    "scaleServings": "Numero di persone",
+    "mealDate": "Data",
+    "mealType": "Tipo pasto",
+    "addToMealPlanSuccess": "Ricetta aggiunta al piano pasti."
   }
 }

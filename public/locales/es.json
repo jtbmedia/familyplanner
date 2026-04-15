@@ -578,7 +578,9 @@
     "personalSyncSuccessGoogle": "Google Calendar conectado. Selecciona un calendario abajo.",
     "personalSyncErrorGoogle": "Error al conectar con Google. Inténtalo de nuevo.",
     "personalSyncSuccessMicrosoft": "Microsoft 365 conectado. Selecciona un calendario abajo.",
-    "personalSyncErrorMicrosoft": "Error al conectar con Microsoft. Inténtalo de nuevo."
+    "personalSyncErrorMicrosoft": "Error al conectar con Microsoft. Inténtalo de nuevo.",
+    "recipesEnabled": "Biblioteca de recetas",
+    "modulesSection": "Módulos"
   },
   "login": {
     "tagline": "Planificación familiar. Segura. Privada. Código abierto.",
@@ -624,5 +626,38 @@
     "unitWeeks": "semanas",
     "unitMonth": "mes",
     "unitMonths": "meses"
+  },
+  "recipes": {
+    "title": "Recetas",
+    "add": "Añadir receta",
+    "edit": "Editar receta",
+    "delete": "Eliminar receta",
+    "deleteConfirm": "¿Eliminar esta receta permanentemente?",
+    "importUrl": "Importar desde URL",
+    "importBtn": "Importar",
+    "importing": "Importando...",
+    "importFailed": "No se pudo importar la receta desde esta URL.",
+    "servings": "Porciones",
+    "steps": "Preparación",
+    "ingredients": "Ingredientes",
+    "tags": "Etiquetas",
+    "source": "Fuente",
+    "addIngredient": "Añadir ingrediente",
+    "addStep": "Añadir paso",
+    "addToMealPlan": "Añadir al plan de comidas",
+    "toShoppingList": "Ingredientes a la lista de compras",
+    "toShoppingDone": "{{ added }} añadidos, {{ merged }} combinados.",
+    "selectList": "Elige una lista",
+    "noRecipes": "Aún no hay recetas. ¡Añade tu primera receta!",
+    "searchPlaceholder": "Buscar recetas...",
+    "forPersons": "Para {{ n }} personas",
+    "uploadPhoto": "Subir foto",
+    "photoUrl": "O URL de foto",
+    "manualTab": "Manual",
+    "importTab": "Importar desde URL",
+    "scaleServings": "Número de personas",
+    "mealDate": "Fecha",
+    "mealType": "Tipo de comida",
+    "addToMealPlanSuccess": "Receta añadida al plan de comidas."
   }
 }

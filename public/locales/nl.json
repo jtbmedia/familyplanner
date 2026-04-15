@@ -578,7 +578,9 @@
     "personalSyncSuccessGoogle": "Google Agenda verbonden. Selecteer een agenda hieronder.",
     "personalSyncErrorGoogle": "Verbinding met Google mislukt. Probeer opnieuw.",
     "personalSyncSuccessMicrosoft": "Microsoft 365 verbonden. Selecteer een agenda hieronder.",
-    "personalSyncErrorMicrosoft": "Verbinding met Microsoft mislukt. Probeer opnieuw."
+    "personalSyncErrorMicrosoft": "Verbinding met Microsoft mislukt. Probeer opnieuw.",
+    "recipesEnabled": "Receptenbibliotheek",
+    "modulesSection": "Modules"
   },
   "login": {
     "tagline": "Gezinsplanning. Veilig. Privacyvriendelijk. Open source.",
@@ -624,5 +626,38 @@
     "unitWeeks": "weken",
     "unitMonth": "maand",
     "unitMonths": "maanden"
+  },
+  "recipes": {
+    "title": "Recepten",
+    "add": "Recept toevoegen",
+    "edit": "Recept bewerken",
+    "delete": "Recept verwijderen",
+    "deleteConfirm": "Dit recept permanent verwijderen?",
+    "importUrl": "Importeren via URL",
+    "importBtn": "Importeren",
+    "importing": "Importeren...",
+    "importFailed": "Kon recept niet importeren van deze URL.",
+    "servings": "Personen",
+    "steps": "Bereidingswijze",
+    "ingredients": "Ingrediënten",
+    "tags": "Tags",
+    "source": "Bron",
+    "addIngredient": "Ingredient toevoegen",
+    "addStep": "Stap toevoegen",
+    "addToMealPlan": "Toevoegen aan maaltijdplanning",
+    "toShoppingList": "Ingrediënten naar boodschappenlijst",
+    "toShoppingDone": "{{ added }} toegevoegd, {{ merged }} samengevoegd.",
+    "selectList": "Kies een lijst",
+    "noRecipes": "Nog geen recepten. Voeg je eerste recept toe!",
+    "searchPlaceholder": "Zoek recepten...",
+    "forPersons": "Voor {{ n }} personen",
+    "uploadPhoto": "Foto uploaden",
+    "photoUrl": "Of foto-URL",
+    "manualTab": "Handmatig",
+    "importTab": "Importeren via URL",
+    "scaleServings": "Aantal personen",
+    "mealDate": "Datum",
+    "mealType": "Maaltijdtype",
+    "addToMealPlanSuccess": "Recept toegevoegd aan maaltijdplanning."
   }
 }
