@@ -34,6 +34,7 @@ let state = {
   currentWeek:      null,   // YYYY-MM-DD (Montag)
   meals:            [],
   lists:            [],     // Einkaufslisten für Transfer-Dropdown
+  recipes:          [],     // Receptenlijst voor koppeling aan maaltijden
   modal:            null,
   visibleMealTypes: ['breakfast', 'lunch', 'dinner', 'snack'],
 };
@@ -107,6 +108,15 @@ async function loadPreferences() {
   }
 }
 
+async function loadRecipes() {
+  try {
+    const res    = await api.get('/recipes');
+    state.recipes = res.data ?? [];
+  } catch {
+    state.recipes = [];
+  }
+}
+
 // --------------------------------------------------------
 // Render
 // --------------------------------------------------------
@@ -137,7 +147,7 @@ export async function render(container, { user }) {
   const today  = new Date().toISOString().slice(0, 10);
   const monday = getMondayOf(today);
 
-  await Promise.all([loadWeek(monday), loadLists(), loadPreferences()]);
+  await Promise.all([loadWeek(monday), loadLists(), loadPreferences(), loadRecipes()]);
   renderWeekGrid();
   wireNav();
 }
@@ -231,6 +241,12 @@ function renderSlot(date, type, mealsForDay) {
             data-meal-id="${meal.id}"
             aria-label="${t('meals.transferToShoppingList')}"
           ><i data-lucide="shopping-cart" style="width:14px;height:14px;" aria-hidden="true"></i></button>` : ''}
+          ${meal.recipe_id ? `<button class="meal-card__action-btn meal-card__action-btn--recipe-shopping"
+            data-action="to-shopping"
+            data-meal-id="${meal.id}"
+            data-recipe-id="${meal.recipe_id}"
+            aria-label="${t('recipes.toShoppingList')}"
+          ><i data-lucide="clipboard-list" style="width:14px;height:14px;" aria-hidden="true"></i></button>` : ''}
           <button class="meal-card__action-btn"
             data-action="delete-meal"
             data-meal-id="${meal.id}"
@@ -297,6 +313,12 @@ function wireGrid(grid) {
 
     if (action === 'transfer-meal') {
       await transferMeal(parseInt(btn.dataset.mealId, 10));
+      return;
+    }
+
+    if (action === 'to-shopping') {
+      e.stopPropagation();
+      await openToShoppingModal(parseInt(btn.dataset.mealId, 10));
     }
   });
 
@@ -323,7 +345,7 @@ function wireDragDrop(grid) {
   grid.addEventListener('pointerdown', (e) => {
     const card = e.target.closest('.meal-card');
     if (!card) return;
-    if (e.target.closest('[data-action="delete-meal"], [data-action="transfer-meal"], [data-action="open-recipe"]')) return;
+    if (e.target.closest('[data-action="delete-meal"], [data-action="transfer-meal"], [data-action="open-recipe"], [data-action="to-shopping"]')) return;
 
     const slot = card.closest('.meal-slot');
     if (!slot) return;
@@ -594,6 +616,14 @@ function buildModalContent({ mode, date, mealType, meal }) {
     </div>
 
     <div class="form-group">
+      <label class="form-label" for="modal-recipe-select">${t('recipes.title')} (${t('optional') || 'optioneel'})</label>
+      <select class="form-input" id="modal-recipe-select">
+        <option value="">— ${t('optional') || 'Geen recept'} —</option>
+        ${state.recipes.map((r) => `<option value="${r.id}" ${isEdit && meal.recipe_id === r.id ? 'selected' : ''}>${esc(r.title)}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="form-group">
       <label class="form-label">${t('meals.ingredientsLabel')}</label>
       <div class="ingredient-list" id="ingredient-list">${ingRows}</div>
       <button class="add-ingredient-btn" id="add-ingredient-btn" type="button">
@@ -642,8 +672,9 @@ async function saveModal(overlay) {
   const date      = overlay.querySelector('#modal-date').value;
   const meal_type = overlay.querySelector('#modal-type').value;
   const title     = overlay.querySelector('#modal-title').value.trim();
-  const notes     = overlay.querySelector('#modal-notes').value.trim() || null;
+  const notes      = overlay.querySelector('#modal-notes').value.trim() || null;
   const recipe_url = overlay.querySelector('#modal-recipe-url').value.trim() || null;
+  const recipe_id  = parseInt(overlay.querySelector('#modal-recipe-select')?.value, 10) || null;
 
   if (!title) {
     window.oikos?.showToast(t('meals.titleRequired'), 'error');
@@ -664,11 +695,11 @@ async function saveModal(overlay) {
     const { mode, meal } = state.modal;
 
     if (mode === 'create') {
-      const res     = await api.post('/meals', { date, meal_type, title, notes, recipe_url, ingredients });
+      const res     = await api.post('/meals', { date, meal_type, title, notes, recipe_url, recipe_id, ingredients });
       state.meals.push(res.data);
     } else {
       // Update meal meta
-      await api.put(`/meals/${meal.id}`, { date, meal_type, title, notes, recipe_url });
+      await api.put(`/meals/${meal.id}`, { date, meal_type, title, notes, recipe_url, recipe_id });
 
       // Sync ingredients
       const existingIds = new Set((meal.ingredients ?? []).map((i) => i.id));
@@ -744,6 +775,62 @@ async function transferMeal(mealId) {
   } catch (err) {
     window.oikos?.showToast(err.data?.error ?? t('common.errorGeneric'), 'error');
   }
+}
+
+// --------------------------------------------------------
+// Recept → Boodschappenlijst (via recipe_id op maaltijd)
+// --------------------------------------------------------
+
+async function openToShoppingModal(mealId) {
+  const listsRes = await api.get('/shopping').catch(() => ({ data: [] }));
+  const lists    = listsRes.data ?? [];
+
+  if (!lists.length) {
+    window.oikos?.showToast(t('meals.noShoppingLists'), 'danger');
+    return;
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>${t('recipes.toShoppingList')}</h3>
+      <div class="form-group">
+        <label class="form-label">${t('recipes.selectList')}</label>
+        <select class="form-input" id="to-shopping-list-select">
+          ${lists.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('recipes.scaleServings')}</label>
+        <input class="form-input" type="number" id="to-shopping-servings" value="4" min="1" max="50" />
+      </div>
+      <div class="modal-panel__footer" style="border:none;padding:0;margin-top:var(--space-4)">
+        <button class="btn btn--secondary" id="to-shopping-cancel">${t('common.cancel')}</button>
+        <button class="btn btn--primary" id="to-shopping-confirm">${t('common.add')}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('#to-shopping-cancel')?.addEventListener('click', () => modal.remove());
+
+  modal.querySelector('#to-shopping-confirm')?.addEventListener('click', async () => {
+    const listId   = parseInt(modal.querySelector('#to-shopping-list-select').value, 10);
+    const servings = parseInt(modal.querySelector('#to-shopping-servings').value, 10);
+    const confirmBtn = modal.querySelector('#to-shopping-confirm');
+    confirmBtn.disabled = true;
+    try {
+      const res = await api.post(`/meals/${mealId}/to-shopping`, { list_id: listId, servings });
+      modal.remove();
+      const added   = res.data?.added   ?? res.added   ?? 0;
+      const merged  = res.data?.merged  ?? res.merged  ?? 0;
+      window.oikos?.showToast(t('recipes.toShoppingDone', { added, merged }), 'success');
+    } catch (err) {
+      window.oikos?.showToast(err.data?.error ?? err.message ?? t('common.errorGeneric'), 'danger');
+      confirmBtn.disabled = false;
+    }
+  });
 }
 
 // --------------------------------------------------------
