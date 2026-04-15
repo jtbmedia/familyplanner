@@ -85,6 +85,23 @@ function findRecipe(parsed) {
  * @throws {Error} Als er geen recept gevonden kan worden
  */
 export async function scrape(url) {
+  // SSRF-bescherming: alleen publieke HTTP(S) URLs toestaan
+  let urlObj;
+  try {
+    urlObj = new URL(url);
+  } catch {
+    throw new Error('Ongeldige URL.');
+  }
+  if (!['http:', 'https:'].includes(urlObj.protocol)) {
+    throw new Error('Alleen HTTP(S) URLs zijn toegestaan.');
+  }
+  const host = urlObj.hostname.toLowerCase();
+  if (host === 'localhost' || /^127\./.test(host) || /^10\./.test(host) ||
+      /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host === '::1' || host.endsWith('.local')) {
+    throw new Error('Interne URLs zijn niet toegestaan.');
+  }
+
   let html;
   try {
     const res = await fetch(url, {
@@ -109,8 +126,8 @@ export async function scrape(url) {
       const parsed = JSON.parse(match[1]);
       recipe = findRecipe(parsed);
       if (recipe) break;
-    } catch {
-      // Ongeldige JSON → volgende blok proberen
+    } catch (parseErr) {
+      log.debug(`Ongeldige JSON in JSON-LD blok: ${parseErr.message}`);
     }
   }
 
