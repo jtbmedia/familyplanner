@@ -260,7 +260,7 @@ function renderAppShell(container) {
   container.innerHTML = `
     <a href="#main-content" class="sr-only">${t('common.skipToContent')}</a>
     <nav class="nav-sidebar" aria-label="${t('nav.main')}">
-      <div class="nav-sidebar__logo"><span>Oikos</span></div>
+      <div class="nav-sidebar__logo"><span>ThuisBasis</span></div>
       <div class="nav-sidebar__items" role="list">
         ${navItems().map(navItemHtml).join('')}
       </div>
