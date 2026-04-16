@@ -216,7 +216,9 @@ export async function scrape(url) {
     instruction,
   }));
 
-  // Afbeelding — kan string, array of ImageObject zijn
+  // Afbeelding — 1) JSON-LD image (string, array of ImageObject)
+  //              2) JSON-LD thumbnailUrl als fallback
+  //              3) og:image meta tag als laatste fallback
   const image = recipe.image;
   let imageUrl = null;
   if (typeof image === 'string') {
@@ -226,6 +228,18 @@ export async function scrape(url) {
     imageUrl = typeof first === 'string' ? first : (first?.url || null);
   } else if (image && typeof image === 'object') {
     imageUrl = image.url || null;
+  }
+
+  if (!imageUrl && recipe.thumbnailUrl) {
+    imageUrl = typeof recipe.thumbnailUrl === 'string'
+      ? recipe.thumbnailUrl
+      : null;
+  }
+
+  if (!imageUrl) {
+    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+                 || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if (ogMatch) imageUrl = ogMatch[1];
   }
 
   return {
