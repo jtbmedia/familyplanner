@@ -176,7 +176,12 @@ export async function scrape(url) {
       },
       signal: AbortSignal.timeout(15_000),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 403) throw new Error(`Toegang geweigerd (HTTP 403) — deze site blokkeert automatische imports.`);
+      if (res.status === 404) throw new Error(`Pagina niet gevonden (HTTP 404).`);
+      if (res.status === 429) throw new Error(`Te veel verzoeken (HTTP 429) — probeer het later opnieuw.`);
+      throw new Error(`HTTP ${res.status}`);
+    }
 
     // Handmatige 2MB limiet (node-fetch v3 ondersteunt de size-optie niet meer)
     const MAX_BYTES = 2 * 1024 * 1024;

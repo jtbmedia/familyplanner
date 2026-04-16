@@ -385,8 +385,8 @@ async function renderForm(container, existing = null, opts = {}) {
       bindStepButtons();
 
       container.querySelector('[data-tab="manual"]')?.click();
-    } catch {
-      errEl.textContent = t('recipes.importFailed');
+    } catch (err) {
+      errEl.textContent = err.message || t('recipes.importFailed');
       errEl.hidden = false;
     } finally {
       btn.disabled = false;
