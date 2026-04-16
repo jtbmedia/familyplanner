@@ -593,6 +593,81 @@
 }
 
 /* --------------------------------------------------------
+ * Recepten-Widget
+ * -------------------------------------------------------- */
+.recipe-widget-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.recipe-widget-item:last-child {
+  border-bottom: none;
+}
+
+.recipe-widget-item:hover {
+  opacity: 0.7;
+}
+
+.recipe-widget-item__thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.recipe-widget-item__thumb--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface-2);
+  color: var(--color-text-disabled);
+}
+
+.recipe-widget-item__thumb--placeholder svg {
+  width: 20px;
+  height: 20px;
+}
+
+.recipe-widget-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0h);
+}
+
+.recipe-widget-item__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recipe-widget-item__tags {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.recipe-widget-item__tag {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  background-color: var(--color-surface-2);
+  border-radius: var(--radius-full);
+  padding: 1px var(--space-2);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------
  * Notizen-Grid-Widget
  * -------------------------------------------------------- */
 .notes-grid-widget {

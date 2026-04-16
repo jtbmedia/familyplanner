@@ -50,7 +50,13 @@ async function renderList(container) {
     container.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">${t('recipes.title')}</h1>
-        <button class="btn btn--primary" id="add-recipe-btn">${t('recipes.add')}</button>
+        <div class="page-header__actions">
+          <button class="btn btn--secondary" id="import-url-btn">
+            <i data-lucide="link" style="width:14px;height:14px;" aria-hidden="true"></i>
+            ${t('recipes.importFromUrl')}
+          </button>
+          <button class="btn btn--primary" id="add-recipe-btn">${t('recipes.add')}</button>
+        </div>
       </div>
 
       <div class="recipes-controls">
@@ -85,6 +91,7 @@ async function renderList(container) {
     `;
 
     container.querySelector('#add-recipe-btn')?.addEventListener('click', () => renderForm(container));
+    container.querySelector('#import-url-btn')?.addEventListener('click', () => renderForm(container, null, { defaultTab: 'import' }));
     container.querySelector('#recipe-search')?.addEventListener('input', (e) => {
       clearTimeout(searchDebounce);
       searchDebounce = setTimeout(() => {
@@ -230,8 +237,9 @@ function renderAddToMealPlanModal(recipe) {
 
 // ── Formulier (nieuw + bewerken) ──────────────────────────────────────────────
 
-async function renderForm(container, existing = null) {
+async function renderForm(container, existing = null, opts = {}) {
   const isEdit = !!existing;
+  const defaultTab = opts.defaultTab ?? 'manual';
 
   function ingredientRow(ing = {}, i = 0) {
     return `
@@ -263,16 +271,23 @@ async function renderForm(container, existing = null) {
 
     <div class="recipe-form-content">
       <div class="settings-tabs" role="tablist">
-        <button class="settings-tab-btn settings-tab-btn--active" data-tab="manual">${t('recipes.manualTab')}</button>
-        <button class="settings-tab-btn" data-tab="import">${t('recipes.importTab')}</button>
+        <button class="settings-tab-btn ${defaultTab === 'manual' ? 'settings-tab-btn--active' : ''}" data-tab="manual">${t('recipes.manualTab')}</button>
+        <button class="settings-tab-btn ${defaultTab === 'import' ? 'settings-tab-btn--active' : ''}" data-tab="import">
+          <i data-lucide="link" style="width:13px;height:13px;vertical-align:-2px;" aria-hidden="true"></i>
+          ${t('recipes.importTab')}
+        </button>
       </div>
 
-      <div id="tab-import" class="tab-panel" hidden>
+      <div id="tab-import" class="tab-panel recipe-import-panel" ${defaultTab !== 'import' ? 'hidden' : ''}>
+        <p class="recipe-import-hint">${t('recipes.importHint')}</p>
         <div class="form-group">
-          <label class="form-label">${t('recipes.importUrl')}</label>
+          <label class="form-label" for="scrape-url">${t('recipes.importUrl')}</label>
           <div class="input-with-btn">
-            <input class="form-input" type="url" id="scrape-url" placeholder="https://..." />
-            <button class="btn btn--secondary" id="scrape-btn">${t('recipes.importBtn')}</button>
+            <input class="form-input" type="url" id="scrape-url" placeholder="https://www.jumbo.com/recept/..." autocomplete="off" />
+            <button class="btn btn--primary" id="scrape-btn">
+              <i data-lucide="download" style="width:14px;height:14px;" aria-hidden="true"></i>
+              ${t('recipes.importBtn')}
+            </button>
           </div>
           <span id="scrape-error" class="form-error" hidden></span>
         </div>
@@ -335,8 +350,16 @@ async function renderForm(container, existing = null) {
       container.querySelectorAll('.settings-tab-btn').forEach((tb) => tb.classList.remove('settings-tab-btn--active'));
       tab.classList.add('settings-tab-btn--active');
       container.querySelector('#tab-import').hidden = tab.dataset.tab !== 'import';
+      if (tab.dataset.tab === 'import') {
+        container.querySelector('#scrape-url')?.focus();
+      }
     });
   });
+
+  // Auto-focus URL input when opened directly on import tab
+  if (defaultTab === 'import') {
+    setTimeout(() => container.querySelector('#scrape-url')?.focus(), 50);
+  }
 
   // Scraper
   container.querySelector('#scrape-btn')?.addEventListener('click', async () => {
@@ -345,7 +368,7 @@ async function renderForm(container, existing = null) {
     const btn    = container.querySelector('#scrape-btn');
     errEl.hidden = true;
     btn.disabled = true;
-    btn.textContent = t('recipes.importing');
+    btn.innerHTML = `<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;" aria-hidden="true"></i> ${t('recipes.importing')}`;
     try {
       const { data } = await api.post('/recipes/scrape', { url });
       container.querySelector('#recipe-title').value     = data.title || '';
@@ -367,7 +390,8 @@ async function renderForm(container, existing = null) {
       errEl.hidden = false;
     } finally {
       btn.disabled = false;
-      btn.textContent = t('recipes.importBtn');
+      btn.innerHTML = `<i data-lucide="download" style="width:14px;height:14px;" aria-hidden="true"></i> ${t('recipes.importBtn')}`;
+      if (window.lucide) window.lucide.createIcons({ el: btn });
     }
   });
 

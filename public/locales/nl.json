@@ -78,7 +78,9 @@
     "dueSoon": "Vandaag",
     "dueTomorrow": "Morgen",
     "allDay": "Hele dag",
-    "shoppingMore": "+{{count}} meer"
+    "shoppingMore": "+{{count}} meer",
+    "recentRecipes": "Recente recepten",
+    "noRecipes": "Nog geen recepten."
   },
   "tasks": {
     "title": "Taken",
@@ -634,10 +636,12 @@
     "edit": "Recept bewerken",
     "delete": "Recept verwijderen",
     "deleteConfirm": "Dit recept permanent verwijderen?",
-    "importUrl": "Importeren via URL",
+    "importUrl": "Receptlink",
     "importBtn": "Importeren",
     "importing": "Importeren...",
     "importFailed": "Kon recept niet importeren van deze URL.",
+    "importFromUrl": "URL importeren",
+    "importHint": "Plak de link van een receptwebsite en we halen de ingrediënten en stappen automatisch op.",
     "servings": "Personen",
     "steps": "Bereidingswijze",
     "ingredients": "Ingrediënten",

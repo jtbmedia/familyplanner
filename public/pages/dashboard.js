@@ -318,6 +318,49 @@ function renderShoppingLists(lists) {
 }
 
 // --------------------------------------------------------
+// Recepten-Widget
+// --------------------------------------------------------
+
+function renderRecipesWidget(recipes) {
+  if (!recipes.length) {
+    return `<div class="widget">
+      ${widgetHeader('book-open', t('nav.recipes'), 0, '/recipes')}
+      <div class="widget__empty">
+        <i data-lucide="book-open" class="empty-state__icon" aria-hidden="true"></i>
+        <div>${t('dashboard.noRecipes')}</div>
+      </div>
+    </div>`;
+  }
+
+  const items = recipes.map((r) => {
+    const imgSrc = r.photo_path
+      ? `/api/v1/recipes/${r.id}/photo`
+      : (r.photo_url || null);
+    const thumb = imgSrc
+      ? `<img class="recipe-widget-item__thumb" src="${esc(imgSrc)}" alt="${esc(r.title)}" loading="lazy" width="48" height="48">`
+      : `<div class="recipe-widget-item__thumb recipe-widget-item__thumb--placeholder"><i data-lucide="utensils" aria-hidden="true"></i></div>`;
+    const tags = r.tags ? JSON.parse(r.tags) : [];
+    const tagHtml = tags.length
+      ? `<div class="recipe-widget-item__tags">${tags.slice(0, 2).map((tag) => `<span class="recipe-widget-item__tag">${esc(tag)}</span>`).join('')}</div>`
+      : '';
+    return `
+      <div class="recipe-widget-item" data-route="/recipes" role="button" tabindex="0">
+        ${thumb}
+        <div class="recipe-widget-item__info">
+          <div class="recipe-widget-item__title">${esc(r.title)}</div>
+          ${tagHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `<div class="widget">
+    ${widgetHeader('book-open', t('dashboard.recentRecipes'), recipes.length, '/recipes')}
+    <div class="widget__body">${items}</div>
+  </div>`;
+}
+
+// --------------------------------------------------------
 // Wetter-Widget
 // --------------------------------------------------------
 
@@ -515,6 +558,7 @@ export async function render(container, { user }) {
         ${renderUrgentTasks(data.urgentTasks ?? [])}
         ${renderUpcomingEvents(data.upcomingEvents ?? [])}
         ${renderShoppingLists(data.shoppingLists ?? [])}
+        ${renderRecipesWidget(data.recentRecipes ?? [])}
         ${renderTodayMeals(data.todayMeals ?? [])}
         ${renderPinnedNotes(data.pinnedNotes ?? [])}
       </div>

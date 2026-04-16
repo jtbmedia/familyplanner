@@ -78,7 +78,9 @@
     "dueSoon": "Vence hoy",
     "dueTomorrow": "Vence mañana",
     "allDay": "Todo el día",
-    "shoppingMore": "+{{count}} más"
+    "shoppingMore": "+{{count}} más",
+    "recentRecipes": "Recetas recientes",
+    "noRecipes": "Aún no hay recetas."
   },
   "tasks": {
     "title": "Tareas",
@@ -638,6 +640,8 @@
     "importBtn": "Importar",
     "importing": "Importando...",
     "importFailed": "No se pudo importar la receta desde esta URL.",
+    "importFromUrl": "Importar URL",
+    "importHint": "Pega el enlace de un sitio de recetas y obtendremos automáticamente los ingredientes y pasos.",
     "servings": "Porciones",
     "steps": "Preparación",
     "ingredients": "Ingredientes",

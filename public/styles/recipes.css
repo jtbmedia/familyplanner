@@ -88,6 +88,24 @@
 }
 
 /* --------------------------------------------------------
+ * Import-paneel
+ * -------------------------------------------------------- */
+.recipe-import-panel {
+  background-color: color-mix(in srgb, var(--module-accent) 6%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--module-accent) 20%, var(--color-border));
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.recipe-import-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-3);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------
  * Zoekbalk + Tag-filter
  * -------------------------------------------------------- */
 .recipes-controls {

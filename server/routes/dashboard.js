@@ -146,6 +146,19 @@ router.get('/', (req, res) => {
     result.shoppingLists = [];
   }
 
+  // Neueste Rezepte (max. 4)
+  try {
+    result.recentRecipes = d.prepare(`
+      SELECT id, title, tags, photo_url, photo_path
+      FROM recipes
+      ORDER BY updated_at DESC
+      LIMIT 4
+    `).all();
+  } catch (err) {
+    log.error('recentRecipes-Fehler:', err.message);
+    result.recentRecipes = [];
+  }
+
   // Alle User (für Avatar-Farben in Widgets)
   try {
     result.users = d.prepare(

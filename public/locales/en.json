@@ -78,7 +78,9 @@
     "dueSoon": "Due today",
     "dueTomorrow": "Due tomorrow",
     "allDay": "All day",
-    "shoppingMore": "+{{count}} more"
+    "shoppingMore": "+{{count}} more",
+    "recentRecipes": "Recent recipes",
+    "noRecipes": "No recipes yet."
   },
   "tasks": {
     "title": "Tasks",
@@ -638,6 +640,8 @@
     "importBtn": "Import",
     "importing": "Importing...",
     "importFailed": "Could not import recipe from this URL.",
+    "importFromUrl": "Import URL",
+    "importHint": "Paste a link from a recipe website and we'll automatically fetch the ingredients and steps.",
     "servings": "Servings",
     "steps": "Instructions",
     "ingredients": "Ingredients",

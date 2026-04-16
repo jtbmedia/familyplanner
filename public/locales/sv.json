@@ -78,7 +78,9 @@
     "dueSoon": "Förfaller idag",
     "dueTomorrow": "Förfaller imorgon",
     "allDay": "Hela dagen",
-    "shoppingMore": "+{{count}} till"
+    "shoppingMore": "+{{count}} till",
+    "recentRecipes": "Senaste recept",
+    "noRecipes": "Inga recept ännu."
   },
   "tasks": {
     "title": "Uppgifter",
@@ -638,6 +640,8 @@
     "importBtn": "Importera",
     "importing": "Importerar...",
     "importFailed": "Kunde inte importera recept från denna URL.",
+    "importFromUrl": "Importera URL",
+    "importHint": "Klistra in länken till en receptwebbplats så hämtar vi ingredienser och steg automatiskt.",
     "servings": "Portioner",
     "steps": "Tillagning",
     "ingredients": "Ingredienser",
