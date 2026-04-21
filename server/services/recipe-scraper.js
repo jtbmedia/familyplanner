@@ -218,6 +218,23 @@ export async function scrape(url) {
     }
   }
 
+  // Fallback: Next.js App Router streamt JSON-LD als string via self.__next_f.push([type, "..."])
+  // Picnic en vergelijkbare sites gebruiken dit patroon.
+  if (!recipe) {
+    const nextRe = /<script[^>]*>\s*self\.__next_f\.push\(\[\d+,\s*("[\s\S]*?")\]\)\s*<\/script>/gi;
+    while ((match = nextRe.exec(html)) !== null) {
+      try {
+        const inner = JSON.parse(match[1]);
+        const cleaned = inner.replace(/[\x00-\x1F]/g, ' ');
+        const parsed = JSON.parse(cleaned);
+        recipe = findRecipe(parsed);
+        if (recipe) break;
+      } catch (parseErr) {
+        log.debug(`Ongeldige JSON in __next_f blok: ${parseErr.message}`);
+      }
+    }
+  }
+
   if (!recipe) {
     throw new Error('Geen receptdata (Schema.org JSON-LD) gevonden op deze pagina.');
   }
