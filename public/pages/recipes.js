@@ -77,7 +77,8 @@ async function renderList(container) {
             return `
               <div class="recipe-card" data-id="${r.id}">
                 <div class="recipe-card__photo-wrap">
-                  ${photo ? `<img class="recipe-card__photo" src="${photo}" alt="${esc(r.title)}" loading="lazy" />` : '<div class="recipe-card__photo recipe-card__photo--placeholder"></div>'}
+                  <div class="recipe-card__photo recipe-card__photo--placeholder"></div>
+                  ${photo ? `<img class="recipe-card__photo" src="${photo}" alt="${esc(r.title)}" loading="lazy" onerror="this.style.display='none'" />` : ''}
                 </div>
                 <div class="recipe-card__body">
                   <div class="recipe-card__title">${esc(r.title)}</div>

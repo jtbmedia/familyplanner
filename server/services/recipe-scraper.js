@@ -278,6 +278,24 @@ export async function scrape(url) {
     if (ogMatch) imageUrl = ogMatch[1];
   }
 
+  // Controleer of de afbeelding publiek toegankelijk is (HEAD-request).
+  // Sommige CDNs (bijv. Picnic) blokkeren hotlinking met HTTP 403/401.
+  if (imageUrl) {
+    try {
+      const imgRes = await fetch(imageUrl, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5_000),
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      });
+      if (!imgRes.ok) {
+        log.debug(`Afbeelding niet toegankelijk (${imgRes.status}), veld leeg gelaten: ${imageUrl}`);
+        imageUrl = null;
+      }
+    } catch {
+      imageUrl = null;
+    }
+  }
+
   return {
     title:       String(recipe.name || '').trim(),
     servings:    parseServings(recipe.recipeYield),
