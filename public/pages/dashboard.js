@@ -339,7 +339,7 @@ function renderRecipesWidget(recipes) {
     const thumb = imgSrc
       ? `<img class="recipe-widget-item__thumb" src="${esc(imgSrc)}" alt="${esc(r.title)}" loading="lazy" width="48" height="48">`
       : `<div class="recipe-widget-item__thumb recipe-widget-item__thumb--placeholder"><i data-lucide="utensils" aria-hidden="true"></i></div>`;
-    const tags = r.tags ? JSON.parse(r.tags) : [];
+    const tags = r.tags ? r.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
     const tagHtml = tags.length
       ? `<div class="recipe-widget-item__tags">${tags.slice(0, 2).map((tag) => `<span class="recipe-widget-item__tag">${esc(tag)}</span>`).join('')}</div>`
       : '';
