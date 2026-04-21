@@ -207,7 +207,10 @@ export async function scrape(url) {
 
   while ((match = scriptRe.exec(html)) !== null) {
     try {
-      const parsed = JSON.parse(match[1]);
+      // Sommige sites hebben raw control characters (incl. \n) in JSON-string-literals.
+      // JSON.parse() weigert dit; browsers niet. Vervang ze door spaties.
+      const cleaned = match[1].replace(/[\x00-\x1F]/g, ' ');
+      const parsed = JSON.parse(cleaned);
       recipe = findRecipe(parsed);
       if (recipe) break;
     } catch (parseErr) {
